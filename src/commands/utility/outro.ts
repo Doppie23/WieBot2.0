@@ -55,8 +55,11 @@ export async function execute(interaction: CommandInteraction) {
     throw new Error(`[ERROR] File ${fileLocation} does not exist.`);
   }
 
-  const vcId = (interaction.member as GuildMember).voice.channel?.id;
-  if (!vcId) {
+  const guild = interaction.guild;
+  if (!guild?.id) throw new Error("guildId is undefined");
+
+  const voiceChannel = (interaction.member as GuildMember).voice.channel;
+  if (!voiceChannel || !voiceChannel.id) {
     await interaction.reply({
       content: "You are not in a voice channel",
       ephemeral: true,
@@ -64,14 +67,14 @@ export async function execute(interaction: CommandInteraction) {
     return;
   }
 
-  const guild = interaction.guild;
-  if (!guild?.id) throw new Error("guildId is undefined");
+  const members = voiceChannel.members.map((e) => e);
+  shuffleArray(members);
 
   const resource = createAudioResource(fileLocation);
   const player = createAudioPlayer();
 
   const connection = joinVoiceChannel({
-    channelId: vcId,
+    channelId: voiceChannel.id,
     guildId: guild.id,
     adapterCreator: guild.voiceAdapterCreator,
   });
@@ -88,8 +91,23 @@ export async function execute(interaction: CommandInteraction) {
   player.on("stateChange", (oldState, newState) => {
     if (newState.status === "idle" && oldState.status === "playing") {
       connection.destroy();
+
+      const promises = members.map((member) => async () => {
+        console.log(`Kicking: ${member.displayName}`);
+        await member.voice.setChannel(null);
+        console.log(`Kicked: ${member.displayName}`);
+      });
+
+      Promise.all(promises);
     }
   });
 
   await interaction.reply("Joined channel");
+}
+
+function shuffleArray(array: any[]) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
 }
