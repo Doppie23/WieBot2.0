@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node dist/index.js",
+    "reload": "node dist/reload-commands.js",
     "build": "tsc",
     "watch": "tsc --watch",
     "lint": "eslint .",
