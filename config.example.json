@@ -1,0 +1,5 @@
+{
+  "token": "TOKEN",
+  "clientId": "CLIENT_ID",
+  "guildId": "GUILD_ID_TO_ADD_COMMANDS_TO"
+}
