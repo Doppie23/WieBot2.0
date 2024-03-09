@@ -10,7 +10,7 @@ type BetterClient = Client & {
 };
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds],
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
 }) as BetterClient;
 
 client.commands = new Collection();
