@@ -88,20 +88,20 @@ export async function execute(interaction: CommandInteraction) {
     console.error(`[ERROR] Something went wrong with the outro: ${error}`);
   });
 
-  player.on("stateChange", (oldState, newState) => {
+  player.on("stateChange", async (oldState, newState) => {
     if (newState.status === "idle" && oldState.status === "playing") {
       connection.destroy();
 
       const promises = members.map((member) => {
         return new Promise(async (resolve) => {
           console.log(`Kicking: ${member.displayName} | ${Date.now()}`);
-          await member.voice.setChannel(null);
+          await member.voice.disconnect();
           console.log(`Kicked: ${member.displayName} | ${Date.now()}`);
           resolve(true);
         });
       });
 
-      Promise.all(promises);
+      await Promise.all(promises);
     }
   });
 

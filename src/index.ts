@@ -1,6 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
-import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
+import {
+  ActivityType,
+  Client,
+  Collection,
+  Events,
+  GatewayIntentBits,
+} from "discord.js";
 import { token } from "../config.json";
 
 import type { Command } from "./types/Command";
@@ -10,6 +16,7 @@ type BetterClient = Client & {
 };
 
 const client = new Client({
+  presence: { activities: [{ name: "You", type: ActivityType.Watching }] },
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
 }) as BetterClient;
 
