@@ -92,16 +92,13 @@ export async function execute(interaction: CommandInteraction) {
     if (newState.status === "idle" && oldState.status === "playing") {
       connection.destroy();
 
-      const promises = members.map((member) => {
-        return new Promise(async (resolve) => {
-          console.log(`Kicking: ${member.displayName} | ${Date.now()}`);
-          await member.voice.disconnect();
-          console.log(`Kicked: ${member.displayName} | ${Date.now()}`);
-          resolve(true);
-        });
+      const promises = members.map(async (member) => {
+        console.log(`Kicking: ${member.displayName} | ${Date.now()}`);
+        await member.voice.disconnect();
+        console.log(`Kicked: ${member.displayName} | ${Date.now()}`);
       });
 
-      await Promise.all(promises);
+      await Promise.all(promises); // Wait for all kicks to finish
     }
   });
 
