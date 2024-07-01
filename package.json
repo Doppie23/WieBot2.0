@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node dist/index.js",
+    "postinstall": "patch-package",
+    "start": "npm run build && node dist/index.js",
     "reload": "node dist/reload-commands.js",
     "build": "tsc",
     "watch": "tsc --watch",
@@ -16,7 +17,8 @@
   "dependencies": {
     "@discordjs/voice": "^0.16.1",
     "discord.js": "^14.14.1",
-    "libsodium-wrappers": "^0.7.13"
+    "libsodium-wrappers": "^0.7.13",
+    "patch-package": "^8.0.0"
   },
   "devDependencies": {
     "typescript": "^5.4.2"

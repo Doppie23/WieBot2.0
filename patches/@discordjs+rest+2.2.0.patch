@@ -1,0 +1,14 @@
+diff --git a/node_modules/@discordjs/rest/dist/index.js b/node_modules/@discordjs/rest/dist/index.js
+index a8216f7..80507d1 100644
+--- a/node_modules/@discordjs/rest/dist/index.js
++++ b/node_modules/@discordjs/rest/dist/index.js
+@@ -1296,7 +1296,8 @@ var REST = class _REST extends import_async_event_emitter.AsyncEventEmitter {
+       value: `Global(${request2.method}:${routeId.bucketRoute})`,
+       lastAccess: -1
+     };
+-    const handler = this.handlers.get(`${hash.value}:${routeId.majorParameter}`) ?? this.createHandler(hash.value, routeId.majorParameter);
++    // const handler = this.handlers.get(`${hash.value}:${routeId.majorParameter}`) ?? this.createHandler(hash.value, routeId.majorParameter);
++    const handler = this.createHandler(hash.value, BurstHandlerMajorIdKey);
+     const { url, fetchOptions } = await this.resolveRequest(request2);
+     return handler.queueRequest(routeId, url, fetchOptions, {
+       body: request2.body,
