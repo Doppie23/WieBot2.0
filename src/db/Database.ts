@@ -67,10 +67,20 @@ export default class Database extends _Database {
    */
   getOutroScores(guildId: string): DbUser[] {
     const users = this.prepare(
-      "SELECT * FROM Users WHERE guildId = ? AND outroScore > 0",
+      "SELECT * FROM Users WHERE guildId = ? AND outroScore > 0 ORDER BY outroScore DESC",
     ).all(guildId) as DbUser[];
 
-    users.sort((a, b) => b.outroScore - a.outroScore);
+    return users;
+  }
+
+  /**
+   * Sorted from highest to lowest
+   */
+  getRngScores(guildId: string): DbUser[] {
+    const users = this.prepare(
+      "SELECT * FROM Users WHERE guildId = ? AND rngScore IS NOT NULL ORDER BY rngScore DESC",
+    ).all(guildId) as DbUser[];
+
     return users;
   }
 
