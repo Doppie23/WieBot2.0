@@ -7,7 +7,7 @@ import { EmbedBuilder, SlashCommandBuilder, userMention } from "discord.js";
 import path from "node:path";
 import fs from "node:fs";
 
-import type { CommandInteraction, GuildMember } from "discord.js";
+import type { ChatInputCommandInteraction, GuildMember } from "discord.js";
 import { increaseOutroScore } from "../../db/outro";
 import { getAllRngUsers, increaseRngScore, isRngUser } from "../../db/rng";
 import random from "../../utils/random";
@@ -52,7 +52,7 @@ export const data = new SlashCommandBuilder()
       .addChoices(...choices),
   );
 
-export async function execute(interaction: CommandInteraction) {
+export async function execute(interaction: ChatInputCommandInteraction) {
   const value = interaction.options.get("choices")?.value;
 
   const choice = choices.find((e) => e.value === value);

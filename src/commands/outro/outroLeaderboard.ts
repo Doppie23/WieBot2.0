@@ -1,12 +1,12 @@
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
-import type { CommandInteraction } from "discord.js";
+import type { ChatInputCommandInteraction } from "discord.js";
 import { getOutroScores } from "../../db/outro";
 
 export const data = new SlashCommandBuilder()
   .setName("outroleaderboard")
   .setDescription("@boodschapjes");
 
-export async function execute(interaction: CommandInteraction) {
+export async function execute(interaction: ChatInputCommandInteraction) {
   if (!interaction.guild) throw new Error("guildId is undefined");
 
   let i = 1;
@@ -15,8 +15,9 @@ export async function execute(interaction: CommandInteraction) {
     .setTitle("Vaakst het laatste de call verlaten")
     .setColor("Random");
 
+  const fields = [];
   for (const user of getOutroScores(interaction.guild.id)) {
-    const guildUser = interaction.guild!.members.cache.get(user.id);
+    const guildUser = await interaction.guild!.members.fetch(user.id);
 
     if (!guildUser) continue;
 
@@ -24,12 +25,13 @@ export async function execute(interaction: CommandInteraction) {
       embed.setThumbnail(guildUser.displayAvatarURL());
     }
 
-    embed.setFields({
+    fields.push({
       name: `${i++}: ${guildUser.displayName}`,
       value: `${user.outroScore.toString()} keer`,
       inline: false,
     });
   }
+  embed.setFields(...fields);
 
   await interaction.reply({ embeds: [embed] });
 }

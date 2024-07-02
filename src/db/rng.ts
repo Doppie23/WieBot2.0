@@ -30,3 +30,19 @@ export function increaseRngScore(id: string, guildId: string, amount: number) {
     throw new Error("Did not increase rng score for user " + id);
   }
 }
+
+export function decreaseRngScore(id: string, guildId: string, amount: number) {
+  if (!isRngUser(id, guildId)) {
+    throw new Error("User " + id + " is not a RNG user");
+  }
+
+  const result = db
+    .prepare(
+      "UPDATE Users SET rngScore = rngScore - ? WHERE id = ? AND guildId = ?",
+    )
+    .run(amount, id, guildId);
+
+  if (result.changes === 0) {
+    throw new Error("Did not decrease rng score for user " + id);
+  }
+}
