@@ -8,7 +8,8 @@
     "start": "npm run build && node dist/index.js",
     "reload": "node dist/reload-commands.js",
     "build": "tsc",
-    "watch": "tsc --watch",
+    "prewatch": "npm run build",
+    "watch": "concurrently \"tsc --watch\" \"node dist/index.js\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -16,6 +17,7 @@
   "license": "ISC",
   "dependencies": {
     "@discordjs/voice": "^0.16.1",
+    "concurrently": "^8.2.2",
     "discord.js": "^14.14.1",
     "libsodium-wrappers": "^0.7.13",
     "patch-package": "^8.0.0"

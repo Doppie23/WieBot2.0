@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   ActivityType,
-  Client,
+  Client as _Client,
   Collection,
   Events,
   GatewayIntentBits,
@@ -11,19 +11,31 @@ import { token } from "../config.json";
 
 import type { Command } from "./types/Command";
 
-type BetterClient = Client & {
+type Client = _Client & {
   commands: Collection<string, Command>;
 };
 
-const client = new Client({
+const client = new _Client({
   presence: { activities: [{ name: "You", type: ActivityType.Watching }] },
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
-}) as BetterClient;
+}) as Client;
 
 client.commands = new Collection();
 
 const foldersPath = path.join(__dirname, "commands");
 const commandFolders = fs.readdirSync(foldersPath);
+
+const setCommand = (fileName: string, command: any): boolean => {
+  if ("data" in command && "execute" in command) {
+    client.commands.set(command.data.name, command);
+    return true;
+  }
+
+  console.warn(
+    `[WARNING] The command at ${fileName} is missing a required "data" or "execute" property.`,
+  );
+  return false;
+};
 
 for (const folder of commandFolders) {
   const commandsPath = path.join(foldersPath, folder);
@@ -34,13 +46,19 @@ for (const folder of commandFolders) {
     const filePath = path.join(commandsPath, file);
     const command = require(filePath);
 
-    if ("data" in command && "execute" in command) {
-      client.commands.set(command.data.name, command);
-    } else {
-      console.warn(
-        `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`,
-      );
-    }
+    const success = setCommand(file, command);
+    if (!success) continue;
+
+    fs.watch(filePath, () => {
+      console.log(`[INFO] ${file} changed, reloading...`);
+
+      delete require.cache[require.resolve(filePath)];
+      const newCommand = require(filePath);
+
+      client.commands.delete(command.data.name);
+      if (setCommand(file, newCommand))
+        console.log(`[INFO] ${file} reloaded successfully!`);
+    });
   }
 }
 
@@ -57,7 +75,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   try {
     await command.execute(interaction);
   } catch (error) {
-    console.error(error);
+    console.error("[ERROR] " + error);
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp({
         content: "There was an error while executing this command!",
