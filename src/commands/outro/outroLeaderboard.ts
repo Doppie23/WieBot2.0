@@ -1,6 +1,7 @@
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
-import { getOutroScores } from "../../db/outro";
+import db from "../../db/db";
+import { getGuildMember } from "../../utils/interaction";
 
 export const data = new SlashCommandBuilder()
   .setName("outroleaderboard")
@@ -16,8 +17,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     .setColor("Random");
 
   const fields = [];
-  for (const user of getOutroScores(interaction.guild.id)) {
-    const guildUser = await interaction.guild!.members.fetch(user.id);
+  for (const user of db.getOutroScores(interaction.guild.id)) {
+    const guildUser = await getGuildMember(interaction, user.id);
 
     if (!guildUser) continue;
 

@@ -4,14 +4,10 @@ import type {
   ChatInputCommandInteraction,
   GuildMember,
 } from "discord.js";
-import {
-  decreaseRngScore,
-  getAllRngUsers,
-  increaseRngScore,
-} from "../../db/rng";
-import { getUser } from "../../db/utils";
-import { User } from "../../db/db";
+import db from "../../db/db";
 import random from "../../utils/random";
+import { DbUser } from "../../db/Database";
+import { getGuildMember } from "../../utils/interaction";
 
 export const data = new SlashCommandBuilder()
   .setName("steel")
@@ -28,18 +24,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const targetId = interaction.options.getString("target");
   if (!targetId) throw new Error("targetId is undefined");
 
-  const user = getUser(interaction.user.id, interaction.guildId!);
-  const target = getUser(targetId, interaction.guildId!);
+  const user = db.getUser(interaction.user.id, interaction.guildId!);
+  const target = db.getUser(targetId, interaction.guildId!);
 
   if (!target || !user) throw new Error("user or target is undefined");
-
-  if (user.rngScore === null) {
-    await interaction.reply({
-      content: "Je doet niet mee.",
-      ephemeral: true,
-    });
-    return;
-  }
 
   if (target.rngScore! <= 0) {
     await interaction.reply({
@@ -70,11 +58,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
 export async function autocomplete(interaction: AutocompleteInteraction) {
   const focusedValue = interaction.options.getFocused();
-  const users = getAllRngUsers(interaction.guildId!);
+  const users = db.getAllRngUsers(interaction.guildId!);
 
   const guildUsers: GuildMember[] = [];
   for (const user of users) {
-    const guildUser = await interaction.guild!.members.fetch(user.id);
+    const guildUser = await getGuildMember(interaction, user.id);
     if (!guildUser || guildUser.id === interaction.user.id) continue;
     guildUsers.push(guildUser);
   }
@@ -87,7 +75,7 @@ export async function autocomplete(interaction: AutocompleteInteraction) {
   );
 }
 
-function steel(user: User, target: User): [boolean, number] {
+function steel(user: DbUser, target: DbUser): [boolean, number] {
   let userScore = user.rngScore!;
   let targetScore = target.rngScore!;
 
@@ -115,11 +103,11 @@ function steel(user: User, target: User): [boolean, number] {
   const guildId = user.guildId;
 
   if (winnerId === user.id) {
-    increaseRngScore(user.id, guildId, addedScore);
-    decreaseRngScore(target.id, guildId, addedScore);
+    db.increaseRngScore(user.id, guildId, addedScore);
+    db.decreaseRngScore(target.id, guildId, addedScore);
     return [true, addedScore];
   }
   const fine = addedScore * 2;
-  decreaseRngScore(user.id, guildId, fine);
+  db.decreaseRngScore(user.id, guildId, fine);
   return [false, fine];
 }

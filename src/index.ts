@@ -11,8 +11,9 @@ import { token } from "../config.json";
 import db from "./db/db";
 
 import type { Command } from "./types/Command";
+import interactionHandler from "./interaction-handler";
 
-type Client = _Client & {
+export type Client = _Client & {
   commands: Collection<string, Command>;
 };
 
@@ -26,9 +27,13 @@ client.commands = new Collection();
 const foldersPath = path.join(__dirname, "commands");
 const commandFolders = fs.readdirSync(foldersPath);
 
-const setCommand = (fileName: string, command: any): boolean => {
+const setCommand = (
+  fileName: string,
+  command: any,
+  isRngCommand: boolean,
+): boolean => {
   if ("data" in command && "execute" in command) {
-    client.commands.set(command.data.name, command);
+    client.commands.set(command.data.name, { ...command, isRngCommand });
     return true;
   }
 
@@ -47,7 +52,9 @@ for (const folder of commandFolders) {
     const filePath = path.join(commandsPath, file);
     const command = require(filePath);
 
-    const success = setCommand(file, command);
+    const isRngCommand = commandsPath.includes("rng");
+
+    const success = setCommand(file, command, isRngCommand);
     if (!success) continue;
 
     fs.watch(filePath, () => {
@@ -57,69 +64,21 @@ for (const folder of commandFolders) {
       const newCommand = require(filePath);
 
       client.commands.delete(command.data.name);
-      if (setCommand(file, newCommand))
+      if (setCommand(file, newCommand, isRngCommand)) {
         console.log(`[INFO] ${file} reloaded successfully!`);
+      }
     });
   }
 }
 
-client.on(Events.InteractionCreate, async (interaction) => {
-  if (interaction.isChatInputCommand()) {
-    if (interaction.guildId === undefined) {
-      interaction.reply("Interactions are only available in guilds");
-      return;
-    }
-
-    const command = client.commands.get(interaction.commandName);
-
-    if (!command) {
-      console.error(
-        `No command matching ${interaction.commandName} was found.`,
-      );
-      return;
-    }
-
-    try {
-      await command.execute(interaction);
-    } catch (error) {
-      console.error("[ERROR] " + error);
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({
-          content: "There was an error while executing this command!",
-          ephemeral: true,
-        });
-      } else {
-        await interaction.reply({
-          content: "There was an error while executing this command!",
-          ephemeral: true,
-        });
-      }
-    }
-  } else if (interaction.isAutocomplete()) {
-    const command = client.commands.get(interaction.commandName);
-
-    if (!command) {
-      console.error(
-        `No command matching ${interaction.commandName} was found.`,
-      );
-      return;
-    }
-
-    try {
-      if (!command.autocomplete)
-        throw new Error("autocomplete is not defined in " + command.data.name);
-
-      await command.autocomplete(interaction);
-    } catch (error) {
-      console.error(error);
-    }
-  }
+client.on(Events.InteractionCreate, (interaction) => {
+  interactionHandler(client, interaction);
 });
 
 client.once(Events.ClientReady, (readyClient) => {
-  console.log(`Ready! Logged in as ${readyClient.user.username}`);
+  console.log(`[INFO] Ready! Logged in as ${readyClient.user.username}`);
 });
 
-console.log(db.name);
+console.log(`[INFO] Using database ${db.name}`);
 
 client.login(token);

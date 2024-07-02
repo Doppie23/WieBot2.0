@@ -8,9 +8,8 @@ import path from "node:path";
 import fs from "node:fs";
 
 import type { ChatInputCommandInteraction, GuildMember } from "discord.js";
-import { increaseOutroScore } from "../../db/outro";
-import { getAllRngUsers, increaseRngScore, isRngUser } from "../../db/rng";
 import random from "../../utils/random";
+import db from "../../db/db";
 
 const choices = [
   {
@@ -97,7 +96,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   if (choice.isRng) {
     let allUsersInCall = true;
-    const usersNeeded = getAllRngUsers(interaction.guildId!);
+    const usersNeeded = db.getAllRngUsers(interaction.guildId!);
     for (const user of usersNeeded) {
       if (!members.some((member) => user.id === member.id)) {
         allUsersInCall = false;
@@ -149,11 +148,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
       if (!lastLeft) throw new Error("Could not find last left member");
 
-      increaseOutroScore(lastLeft.id, lastLeft.guild.id);
+      db.increaseOutroScore(lastLeft.id, lastLeft.guild.id);
       if (!choice.isRng) {
         await interaction.followUp(userMention(lastLeft.id));
       } else {
-        if (!isRngUser(lastLeft.id, lastLeft.guild.id)) {
+        if (!db.isRngUser(lastLeft.id, lastLeft.guild.id)) {
           await interaction.followUp(
             `${userMention(
               lastLeft.id,
@@ -163,7 +162,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         }
 
         const score = getRngScore();
-        increaseRngScore(lastLeft.id, lastLeft.guild.id, score);
+        db.increaseRngScore(lastLeft.id, lastLeft.guild.id, score);
 
         const embed = new EmbedBuilder()
           .setTitle("Outro")

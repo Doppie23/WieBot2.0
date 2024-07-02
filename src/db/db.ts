@@ -1,5 +1,5 @@
-import Database from "better-sqlite3";
 import { existsSync } from "node:fs";
+import Database from "./Database";
 
 const fileName = "database.db";
 
@@ -20,12 +20,5 @@ if (!exists) {
     `,
   ).run();
 }
-
-export type User = {
-  id: string;
-  guildId: string;
-  rngScore: number | null;
-  outroScore: number;
-};
 
 export default db;
