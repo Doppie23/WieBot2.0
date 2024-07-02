@@ -10,6 +10,18 @@ export type DbUser = {
 export default class Database extends _Database {
   constructor(fileName: string) {
     super(fileName);
+
+    this.prepare(
+      `
+      CREATE TABLE IF NOT EXISTS Users (
+        id          TEXT NOT NULL,
+        guildId     TEXT NOT NULL,
+        rngScore    INT DEFAULT NULL,
+        outroScore  INT DEFAULT 0,
+        PRIMARY KEY (id, guildId)
+      );
+    `,
+    ).run();
   }
 
   userExists(id: string, guildId: string): boolean {
@@ -76,7 +88,7 @@ export default class Database extends _Database {
     return user.rngScore !== null;
   }
 
-  increaseRngScore(id: string, guildId: string, amount: number) {
+  updateRngScore(id: string, guildId: string, amount: number) {
     if (!this.isRngUser(id, guildId)) {
       throw new Error("User " + id + " is not a RNG user");
     }
@@ -90,17 +102,8 @@ export default class Database extends _Database {
     }
   }
 
-  decreaseRngScore(id: string, guildId: string, amount: number) {
-    if (!this.isRngUser(id, guildId)) {
-      throw new Error("User " + id + " is not a RNG user");
-    }
-
-    const result = this.prepare(
-      "UPDATE Users SET rngScore = rngScore - ? WHERE id = ? AND guildId = ?",
-    ).run(amount, id, guildId);
-
-    if (result.changes === 0) {
-      throw new Error("Did not decrease rng score for user " + id);
-    }
+  donate(fromId: string, toId: string, guildId: string, amount: number) {
+    this.updateRngScore(fromId, guildId, -amount);
+    this.updateRngScore(toId, guildId, amount);
   }
 }

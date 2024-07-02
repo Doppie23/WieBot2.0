@@ -92,8 +92,11 @@ function steel(user: DbUser, target: DbUser): [boolean, number] {
   );
 
   let scoreFraction: number;
-  if (userScore >= targetScore) scoreFraction = targetScore / userScore;
-  else scoreFraction = userScore / targetScore;
+  if (userScore >= targetScore) {
+    scoreFraction = targetScore / userScore;
+  } else {
+    scoreFraction = userScore / targetScore;
+  }
   scoreFraction = 1 - scoreFraction;
 
   let addedScore = targetScore * scoreFraction;
@@ -103,11 +106,10 @@ function steel(user: DbUser, target: DbUser): [boolean, number] {
   const guildId = user.guildId;
 
   if (winnerId === user.id) {
-    db.increaseRngScore(user.id, guildId, addedScore);
-    db.decreaseRngScore(target.id, guildId, addedScore);
+    db.donate(target.id, user.id, guildId, addedScore);
     return [true, addedScore];
   }
   const fine = addedScore * 2;
-  db.decreaseRngScore(user.id, guildId, fine);
+  db.updateRngScore(user.id, guildId, -fine);
   return [false, fine];
 }

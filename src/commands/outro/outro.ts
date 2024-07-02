@@ -162,7 +162,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         }
 
         const score = getRngScore();
-        db.increaseRngScore(lastLeft.id, lastLeft.guild.id, score);
+        db.updateRngScore(lastLeft.id, lastLeft.guild.id, score);
 
         const embed = new EmbedBuilder()
           .setTitle("Outro")
@@ -195,7 +195,7 @@ function getRngScore() {
     return 1000;
   }
 
-  const score = random.randrange(1, 100);
+  const score = random.randrange(5, 100);
   const positive = random.choices([true, false], [9, 1]);
   return score * (positive ? 1 : -1);
 }
