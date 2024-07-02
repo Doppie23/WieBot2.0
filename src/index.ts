@@ -66,6 +66,11 @@ for (const folder of commandFolders) {
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
+  if (interaction.guildId === undefined) {
+    interaction.reply("Interactions are only available in guilds");
+    return;
+  }
+
   const command = client.commands.get(interaction.commandName);
 
   if (!command) {

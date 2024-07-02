@@ -3,22 +3,42 @@ import {
   createAudioResource,
   joinVoiceChannel,
 } from "@discordjs/voice";
-import { SlashCommandBuilder, userMention } from "discord.js";
+import { EmbedBuilder, SlashCommandBuilder, userMention } from "discord.js";
 import path from "node:path";
 import fs from "node:fs";
 
 import type { CommandInteraction, GuildMember } from "discord.js";
 import { increaseOutroScore } from "../../db/outro";
+import { getAllRngUsers, increaseRngScore, isRngUser } from "../../db/rng";
+import random from "../../utils/random";
 
 const choices = [
-  { name: "Crab Rave", value: "crab-rave.mp3", message: ":crab:" },
+  {
+    name: "Crab Rave",
+    value: "crabrave",
+    filename: "crab-rave.mp3",
+    message: ":crab:",
+  },
   {
     name: "Epic Outro",
-    value: "epic-outro.mp3",
+    value: "epicoutro",
+    filename: "epic-outro.mp3",
     message: "SMASH THAT LIKE BUTTON :thumbsup:",
     reactions: ["👍", "👎"],
   },
-  { name: "Royalistiq", value: "royalistiq.mp3", message: "HOOWWH MY DAYS 😱" },
+  {
+    name: "Royalistiq",
+    value: "royalistiq",
+    filename: "royalistiq.mp3",
+    message: "HOOWWH MY DAYS 😱",
+  },
+  {
+    name: "RNG certified",
+    value: "rngcertified",
+    filename: "royalistiq.mp3",
+    message: "RNG Certified 🍀",
+    isRng: true,
+  },
 ];
 
 export const data = new SlashCommandBuilder()
@@ -54,7 +74,7 @@ export async function execute(interaction: CommandInteraction) {
     "..",
     "..",
     "outro-songs",
-    choice.value,
+    choice.filename,
   );
 
   if (!fs.existsSync(fileLocation)) {
@@ -74,6 +94,27 @@ export async function execute(interaction: CommandInteraction) {
   }
 
   const members = voiceChannel.members.map((e) => e);
+
+  if (choice.isRng) {
+    let allUsersInCall = true;
+    const usersNeeded = getAllRngUsers(interaction.guildId!);
+    for (const user of usersNeeded) {
+      if (!members.some((member) => user.id === member.id)) {
+        allUsersInCall = false;
+        break;
+      }
+    }
+
+    if (!allUsersInCall) {
+      await interaction.reply({
+        content:
+          "Niet iedereen die meedoet zit in call, dus deze outro kan niet.",
+        ephemeral: true,
+      });
+      return;
+    }
+  }
+
   shuffleArray(members);
 
   const resource = createAudioResource(fileLocation);
@@ -91,7 +132,7 @@ export async function execute(interaction: CommandInteraction) {
   console.log(`[INFO] Now playing ${fileLocation}`);
 
   player.on("error", (error) => {
-    console.error(`[ERROR] Something went wrong with the outro: ${error}`);
+    throw new Error(`Something went wrong with the outro: ${error}`);
   });
 
   player.on("stateChange", async (oldState, newState) => {
@@ -107,8 +148,34 @@ export async function execute(interaction: CommandInteraction) {
       await Promise.all(promises); // Wait for all kicks to finish
 
       if (!lastLeft) throw new Error("Could not find last left member");
-      await interaction.followUp(userMention(lastLeft.id));
+
       increaseOutroScore(lastLeft.id, lastLeft.guild.id);
+      if (!choice.isRng) {
+        await interaction.followUp(userMention(lastLeft.id));
+      } else {
+        if (!isRngUser(lastLeft.id, lastLeft.guild.id)) {
+          await interaction.followUp(
+            `${userMention(
+              lastLeft.id,
+            )} doet niet mee, niemand krijgt er dus punten bij.`,
+          );
+          return;
+        }
+
+        const score = getRngScore();
+        increaseRngScore(lastLeft.id, lastLeft.guild.id, score);
+
+        const embed = new EmbedBuilder()
+          .setTitle("Outro")
+          .setColor("Random")
+          .setThumbnail(lastLeft.displayAvatarURL())
+          .addFields([
+            { name: "Winnaar:", value: lastLeft.displayName },
+            { name: "Punten:", value: score.toString() },
+          ]);
+
+        await interaction.followUp({ embeds: [embed] });
+      }
     }
   });
 
@@ -121,6 +188,17 @@ export async function execute(interaction: CommandInteraction) {
       await response.react(reaction);
     }
   }
+}
+
+function getRngScore() {
+  // hoofdprijs
+  if (random.choices([true, false], [1, 20])) {
+    return 1000;
+  }
+
+  const score = random.randrange(1, 100);
+  const positive = random.choices([true, false], [9, 1]);
+  return score * (positive ? 1 : -1);
 }
 
 function shuffleArray(array: any[]) {

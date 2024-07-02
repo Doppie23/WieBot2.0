@@ -13,9 +13,7 @@ export function increaseOutroScore(id: string, guildId: string) {
     .run(id, guildId);
 
   if (result.changes === 0) {
-    console.warn("[WARN] Did not increase outro score for user " + id);
-  } else {
-    console.log("[INFO] Increased outro score for user " + id);
+    throw new Error("Did not increase outro score for user " + id);
   }
 }
 
