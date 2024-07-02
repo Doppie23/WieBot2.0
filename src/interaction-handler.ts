@@ -8,7 +8,7 @@ export default async function interactionHandler(
 ) {
   if (interaction.isChatInputCommand()) {
     if (interaction.guildId === undefined) {
-      interaction.reply("Interactions are only available in guilds");
+      interaction.reply("Wat ga je mij prive lopen appen dan...?");
       return;
     }
 
@@ -38,12 +38,12 @@ export default async function interactionHandler(
       console.error("[ERROR] " + error);
       if (interaction.replied || interaction.deferred) {
         await interaction.followUp({
-          content: "There was an error while executing this command!",
+          content: "Er is iets grandioos fout gegaan...",
           ephemeral: true,
         });
       } else {
         await interaction.reply({
-          content: "There was an error while executing this command!",
+          content: "Er is iets grandioos fout gegaan...",
           ephemeral: true,
         });
       }
@@ -53,7 +53,7 @@ export default async function interactionHandler(
 
     if (!command) {
       console.error(
-        `No command matching ${interaction.commandName} was found.`,
+        `[ERROR] No command matching ${interaction.commandName} was found.`,
       );
       return;
     }

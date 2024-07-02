@@ -6,7 +6,6 @@ import {
 import { EmbedBuilder, SlashCommandBuilder, userMention } from "discord.js";
 import path from "node:path";
 import fs from "node:fs";
-
 import type { ChatInputCommandInteraction, GuildMember } from "discord.js";
 import random from "../../utils/random";
 import db from "../../db/db";
@@ -57,14 +56,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const choice = choices.find((e) => e.value === value);
 
   if (!(choice && typeof value === "string")) {
-    console.warn(
-      `[WARN] User (${interaction.user.displayName}) picked choice should not be possible: ${choice} from ${choices}`,
+    throw new Error(
+      `User (${interaction.user.displayName}) picked choice should not be possible: ${choice} from ${choices}`,
     );
-    await interaction.reply({
-      content: "You did something that should not be possible :'(",
-      ephemeral: true,
-    });
-    return;
   }
 
   const fileLocation = path.join(
@@ -77,11 +71,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   );
 
   if (!fs.existsSync(fileLocation)) {
-    throw new Error(`[ERROR] File ${fileLocation} does not exist.`);
+    throw new Error(`File ${fileLocation} does not exist.`);
   }
 
-  const guild = interaction.guild;
-  if (!guild?.id) throw new Error("guildId is undefined");
+  const guild = interaction.guild!;
 
   const voiceChannel = (interaction.member as GuildMember).voice.channel;
   if (!voiceChannel || !voiceChannel.id) {
@@ -128,53 +121,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   player.play(resource);
   connection.subscribe(player);
 
-  console.log(`[INFO] Now playing ${fileLocation}`);
-
   player.on("error", (error) => {
     throw new Error(`Something went wrong with the outro: ${error}`);
   });
 
   player.on("stateChange", async (oldState, newState) => {
     if (newState.status === "idle" && oldState.status === "playing") {
-      connection.destroy();
-
-      let lastLeft: GuildMember | undefined;
-      const promises = members.map(async (member) => {
-        await member.voice.disconnect();
-        lastLeft = member;
-      });
-
-      await Promise.all(promises); // Wait for all kicks to finish
-
-      if (!lastLeft) throw new Error("Could not find last left member");
-
-      db.increaseOutroScore(lastLeft.id, lastLeft.guild.id);
-      if (!choice.isRng) {
-        await interaction.followUp(userMention(lastLeft.id));
-      } else {
-        if (!db.isRngUser(lastLeft.id, lastLeft.guild.id)) {
-          await interaction.followUp(
-            `${userMention(
-              lastLeft.id,
-            )} doet niet mee, niemand krijgt er dus punten bij.`,
-          );
-          return;
-        }
-
-        const score = getRngScore();
-        db.updateRngScore(lastLeft.id, lastLeft.guild.id, score);
-
-        const embed = new EmbedBuilder()
-          .setTitle("Outro")
-          .setColor("Random")
-          .setThumbnail(lastLeft.displayAvatarURL())
-          .addFields([
-            { name: "Winnaar:", value: lastLeft.displayName },
-            { name: "Punten:", value: score.toString() },
-          ]);
-
-        await interaction.followUp({ embeds: [embed] });
-      }
+      await onStoppedPlaying();
     }
   });
 
@@ -185,6 +138,51 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   if (choice.reactions) {
     for (const reaction of choice.reactions) {
       await response.react(reaction);
+    }
+  }
+
+  async function onStoppedPlaying() {
+    connection.destroy();
+
+    let lastLeft: GuildMember | undefined;
+    const promises = members.map(async (member) => {
+      await member.voice.disconnect();
+      lastLeft = member;
+    });
+
+    await Promise.all(promises);
+
+    if (!lastLeft) throw new Error("Could not find last left member");
+
+    db.increaseOutroScore(lastLeft.id, lastLeft.guild.id);
+
+    if (!choice) return;
+
+    if (!choice.isRng) {
+      await interaction.followUp(userMention(lastLeft.id));
+    } else {
+      if (!db.isRngUser(lastLeft.id, lastLeft.guild.id)) {
+        await interaction.followUp(
+          `${userMention(
+            lastLeft.id,
+          )} doet niet mee, niemand krijgt er dus punten bij.`,
+        );
+        return;
+      }
+
+      const score = getRngScore();
+      db.updateRngScore(lastLeft.id, lastLeft.guild.id, score);
+
+      const embed = new EmbedBuilder()
+        .setTitle("Outro")
+        .setColor("Random")
+        .setThumbnail(lastLeft.displayAvatarURL())
+        .addFields([
+          { name: "Winnaar:", value: lastLeft.displayName },
+          { name: "Punten:", value: score.toString() },
+        ]);
+
+      await interaction.followUp({ embeds: [embed] });
     }
   }
 }
