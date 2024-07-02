@@ -5,18 +5,21 @@
   "main": "index.js",
   "scripts": {
     "postinstall": "patch-package",
-    "start": "npm run build && node dist/index.js",
-    "reload": "node dist/reload-commands.js",
     "build": "tsc",
+    "prestart": "npm run build",
+    "start": "node dist/index.js",
+    "prereload": "npm run build",
+    "reload": "node dist/reload-commands.js",
     "prewatch": "npm run build",
-    "watch": "concurrently \"tsc --watch\" \"node dist/index.js\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "watch": "concurrently \"tsc --watch\" \"node dist/index.js\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@discordjs/voice": "^0.16.1",
+    "@types/better-sqlite3": "^7.6.11",
+    "better-sqlite3": "^11.1.1",
     "concurrently": "^8.2.2",
     "discord.js": "^14.14.1",
     "libsodium-wrappers": "^0.7.13",

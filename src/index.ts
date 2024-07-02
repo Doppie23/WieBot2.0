@@ -8,6 +8,7 @@ import {
   GatewayIntentBits,
 } from "discord.js";
 import { token } from "../config.json";
+import db from "./db/db";
 
 import type { Command } from "./types/Command";
 
@@ -93,5 +94,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 client.once(Events.ClientReady, (readyClient) => {
   console.log(`Ready! Logged in as ${readyClient.user.username}`);
 });
+
+console.log(db.name);
 
 client.login(token);

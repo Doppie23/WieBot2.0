@@ -8,6 +8,7 @@ import path from "node:path";
 import fs from "node:fs";
 
 import type { CommandInteraction, GuildMember } from "discord.js";
+import { increaseOutroScore } from "../../db/outro";
 
 const choices = [
   { name: "Crab Rave", value: "crab-rave.mp3", message: ":crab:" },
@@ -107,6 +108,7 @@ export async function execute(interaction: CommandInteraction) {
 
       if (!lastLeft) throw new Error("Could not find last left member");
       await interaction.followUp(userMention(lastLeft.id));
+      increaseOutroScore(lastLeft.id, lastLeft.guild.id);
     }
   });
 
