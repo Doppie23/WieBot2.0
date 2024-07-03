@@ -12,6 +12,12 @@ import db from "./db/db";
 
 import type { Command } from "./types/Command";
 import interactionHandler from "./interaction-handler";
+import random from "./utils/random";
+import {
+  createAudioPlayer,
+  createAudioResource,
+  joinVoiceChannel,
+} from "@discordjs/voice";
 
 export type Client = _Client & {
   commands: Collection<string, Command>;
@@ -77,6 +83,44 @@ for (const folder of commandFolders) {
 
 client.on(Events.InteractionCreate, (interaction) => {
   interactionHandler(client, interaction);
+});
+
+client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
+  if (
+    newState.channel === null ||
+    oldState.channel === newState.channel ||
+    !isProduction
+  )
+    return;
+
+  try {
+    const voiceChannel = newState.channel;
+    const guild = voiceChannel.guild;
+    const fileLocation = await random.fileFromDir("join-sounds");
+    const resource = createAudioResource(fileLocation);
+    const player = createAudioPlayer();
+
+    const connection = joinVoiceChannel({
+      channelId: voiceChannel.id,
+      guildId: guild.id,
+      adapterCreator: guild.voiceAdapterCreator,
+    });
+
+    player.play(resource);
+    connection.subscribe(player);
+
+    player.on("error", (error) => {
+      throw new Error(`Something went wrong with the outro: ${error}`);
+    });
+
+    player.on("stateChange", async (oldState, newState) => {
+      if (newState.status === "idle" && oldState.status === "playing") {
+        connection.destroy();
+      }
+    });
+  } catch (error) {
+    console.error(`[ERROR] Error with join sound: ${error}`);
+  }
 });
 
 client.once(Events.ClientReady, (readyClient) => {
