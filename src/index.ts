@@ -137,6 +137,10 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
   }
 });
 
+process.on("uncaughtException", (e) => {
+  console.log("[ERROR] Uncaught exception ", e);
+});
+
 client.once(Events.ClientReady, (readyClient) => {
   console.log(`[INFO] Ready! Logged in as ${readyClient.user.username}`);
 });
