@@ -1,10 +1,4 @@
-import {
-  ActionRowBuilder,
-  EmbedBuilder,
-  SlashCommandBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-} from "discord.js";
+import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import random from "../../utils/random";
 import db from "../../db/db";
@@ -75,6 +69,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     };
   }
 
+  const user = db.getUser(interaction.user.id, interaction.guildId!);
+  if (user!.rngScore! < options.amount) {
+    await interaction.reply({
+      content: "Je hebt te weinig punten!",
+      ephemeral: true,
+    });
+    return;
+  }
+
   let outcome = spinRoulette(options);
   db.updateRngScore(
     interaction.user.id,
@@ -85,67 +88,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   await interaction.reply({
     embeds: [createEmbed(options, outcome, interaction.user.displayName)],
   });
-
-  // while (outcome.success) {
-  //   const confirm = new ButtonBuilder()
-  //     .setCustomId("confirm")
-  //     .setLabel("Ja")
-  //     .setStyle(ButtonStyle.Primary);
-
-  //   const cancel = new ButtonBuilder()
-  //     .setCustomId("cancel")
-  //     .setLabel("Nee")
-  //     .setStyle(ButtonStyle.Secondary);
-
-  //   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-  //     confirm,
-  //     cancel,
-  //   );
-
-  //   const doubleWinnings = outcome.winnings * 2;
-
-  //   const response = await interaction.followUp({
-  //     content: `Double or nothing met ${doubleWinnings} punten?`,
-  //     components: [row],
-  //   });
-
-  //   try {
-  //     const confirmation = await response.awaitMessageComponent({
-  //       filter: (i) => i.user.id === interaction.user.id,
-  //       time: 60_000,
-  //     });
-
-  //     if (confirmation.customId === "confirm") {
-  //       await response.delete();
-
-  //       db.updateRngScore(
-  //         interaction.user.id,
-  //         interaction.guildId!,
-  //         -outcome.winnings,
-  //       );
-
-  //       options.amount = doubleWinnings;
-  //       outcome = spinRoulette(options);
-  //       if (outcome.success) {
-  //         db.updateRngScore(
-  //           interaction.user.id,
-  //           interaction.guildId!,
-  //           outcome.winnings,
-  //         );
-  //       }
-
-  //       await interaction.followUp({
-  //         embeds: [createEmbed(options, outcome, interaction.user.displayName)],
-  //       });
-  //     } else if (confirmation.customId === "cancel") {
-  //       throw new Error("Cancelled");
-  //     }
-  //   } catch (e) {
-  //     // timeout
-  //     await response.delete();
-  //     break;
-  //   }
-  // }
 }
 
 function createEmbed(
@@ -155,7 +97,7 @@ function createEmbed(
 ): EmbedBuilder {
   return new EmbedBuilder()
     .setTitle("Roulette")
-    .setColor("Red")
+    .setColor(outcome.success ? "Green" : "Red")
     .setDescription(
       `${name} heeft ${options.amount} punten ingezet op ${
         options.type === "number" ? "nummer" + options.number : options.type
