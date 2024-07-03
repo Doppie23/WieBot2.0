@@ -94,9 +94,23 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
     return;
 
   try {
+    const dir = "join-sounds";
+    const fileLocation = await new Promise<string>((resolve, reject) => {
+      if (!fs.existsSync(dir)) {
+        return reject(new Error(`Directory ${dir} does not exist`));
+      }
+
+      fs.readdir(dir, (e, files) => {
+        if (e) return reject(e);
+
+        const file = random.choice(files);
+        resolve(path.join(dir, file));
+      });
+    });
+
     const voiceChannel = newState.channel;
     const guild = voiceChannel.guild;
-    const fileLocation = await random.fileFromDir("join-sounds");
+
     const resource = createAudioResource(fileLocation);
     const player = createAudioPlayer();
 

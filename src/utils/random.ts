@@ -1,6 +1,3 @@
-import fs from "node:fs";
-import path from "node:path";
-
 function randrange(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -43,27 +40,11 @@ function shuffle(array: any[]) {
   }
 }
 
-function fileFromDir(dir: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    if (!fs.existsSync(dir)) {
-      return reject(new Error(`Directory ${dir} does not exist`));
-    }
-
-    fs.readdir(dir, (e, files) => {
-      if (e) return reject(e);
-
-      const file = random.choice(files);
-      resolve(path.join(dir, file));
-    });
-  });
-}
-
 const random = {
   randrange,
   choices,
   choice,
   shuffle,
-  fileFromDir,
 };
 
 export default random;
