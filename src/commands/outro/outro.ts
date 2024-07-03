@@ -107,7 +107,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
   }
 
-  shuffleArray(members);
+  random.shuffle(members);
 
   const resource = createAudioResource(fileLocation);
   const player = createAudioPlayer();
@@ -196,11 +196,4 @@ function getRngScore() {
   const score = random.randrange(5, 100);
   const positive = random.choices([true, false], [9, 1]);
   return score * (positive ? 1 : -1);
-}
-
-function shuffleArray(array: any[]) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
 }
