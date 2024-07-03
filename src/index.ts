@@ -17,6 +17,8 @@ export type Client = _Client & {
   commands: Collection<string, Command>;
 };
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const client = new _Client({
   presence: { activities: [{ name: "You", type: ActivityType.Watching }] },
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
@@ -56,6 +58,8 @@ for (const folder of commandFolders) {
 
     const success = setCommand(file, command, isRngCommand);
     if (!success) continue;
+
+    if (isProduction) continue;
 
     fs.watch(filePath, () => {
       console.log(`[INFO] ${file} changed, reloading...`);

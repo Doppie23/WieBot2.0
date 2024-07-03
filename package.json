@@ -7,11 +7,11 @@
     "postinstall": "patch-package",
     "build": "tsc",
     "prestart": "npm run build",
-    "start": "node dist/index.js",
+    "start": "cross-env NODE_ENV=production node dist/index.js",
     "prereload": "npm run build",
     "reload": "node dist/reload-commands.js",
     "prewatch": "npm run build",
-    "watch": "concurrently \"tsc --watch\" \"node dist/index.js\""
+    "watch": "cross-env NODE_ENV=development concurrently \"tsc --watch\" \"node dist/index.js\""
   },
   "keywords": [],
   "author": "",
@@ -21,6 +21,7 @@
     "@types/better-sqlite3": "^7.6.11",
     "better-sqlite3": "^11.1.1",
     "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
     "discord.js": "^14.14.1",
     "libsodium-wrappers": "^0.7.13",
     "patch-package": "^8.0.0"
