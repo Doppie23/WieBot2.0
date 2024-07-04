@@ -69,7 +69,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     };
   }
 
-  const user = db.getUser(interaction.user.id, interaction.guildId!);
+  const user = db.users.getUser(interaction.user.id, interaction.guildId!);
   if (user!.rngScore! < options.amount) {
     await interaction.reply({
       content: "Je hebt te weinig punten!",
@@ -79,7 +79,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 
   let outcome = spinRoulette(options);
-  db.updateRngScore(
+  db.users.updateRngScore(
     interaction.user.id,
     interaction.guildId!,
     outcome.success ? outcome.winnings : -options.amount,

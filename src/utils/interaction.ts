@@ -17,7 +17,7 @@ export async function autocompleteRngUsers(
   interaction: AutocompleteInteraction,
 ) {
   const focusedValue = interaction.options.getFocused();
-  const users = db.getAllRngUsers(interaction.guildId!);
+  const users = db.users.getAllRngUsers(interaction.guildId!);
 
   const guildUsers: GuildMember[] = [];
   for (const user of users) {

@@ -3,6 +3,8 @@ import type { ChatInputCommandInteraction } from "discord.js";
 import random from "../../utils/random";
 import db from "../../db/db";
 
+export const timeout = 12 * 60 * 60; // 12 hours
+
 export const data = new SlashCommandBuilder()
   .setName("luckywheel")
   .setDescription("Altijd prijs!!!");
@@ -23,7 +25,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   const score = luckyWheel.currentOptions[1]!;
 
-  db.updateRngScore(interaction.user.id, interaction.guildId!, score);
+  db.users.updateRngScore(interaction.user.id, interaction.guildId!, score);
 
   await interaction.followUp(`Je hebt ${score} punten gewonnen.`);
 }

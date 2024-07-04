@@ -15,7 +15,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const embed = new EmbedBuilder().setTitle("Beste RNG").setColor("Random");
 
   const fields = [];
-  for (const user of db.getRngScores(interaction.guild.id)) {
+  for (const user of db.users.getRngScores(interaction.guild.id)) {
     const guildUser = await getGuildMember(interaction, user.id);
 
     if (i == 1) {

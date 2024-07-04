@@ -1,5 +1,5 @@
 import { Interaction } from "discord.js";
-import { Client } from ".";
+import { Client, isProduction } from ".";
 import db from "./db/db";
 import { onModalSubmit as paardenRaceOnModalSubmit } from "./commands/rng/paardenrace";
 
@@ -23,7 +23,7 @@ export default async function interactionHandler(
     }
 
     if (command.isRngCommand) {
-      const user = db.getUser(interaction.user.id, interaction.guildId!);
+      const user = db.users.getUser(interaction.user.id, interaction.guildId!);
       if (!user || user.rngScore === null) {
         await interaction.reply({
           content: "Je doet niet mee aan het RNG spel.",
@@ -31,6 +31,31 @@ export default async function interactionHandler(
         });
         return;
       }
+    }
+
+    if (command.timeout && isProduction) {
+      const timeRemaining = db.timeouts.timeRemaining(
+        interaction.user.id,
+        interaction.guildId!,
+        interaction.commandName,
+      );
+
+      if (timeRemaining > 0) {
+        await interaction.reply({
+          content: `Je moet nog ${Math.ceil(
+            timeRemaining / 1000,
+          )} seconden wachten voordat je dit commando weer kan gebruiken.`,
+          ephemeral: true,
+        });
+        return;
+      }
+
+      db.timeouts.addTimeout(
+        interaction.user.id,
+        interaction.guildId!,
+        interaction.commandName,
+        command.timeout,
+      );
     }
 
     try {

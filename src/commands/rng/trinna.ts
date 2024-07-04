@@ -17,7 +17,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
   const amount = interaction.options.getInteger("amount")!;
 
-  const user = db.getUser(interaction.user.id, interaction.guildId!);
+  const user = db.users.getUser(interaction.user.id, interaction.guildId!);
   if (user!.rngScore! < amount) {
     await interaction.reply({
       content: "Je hebt te weinig punten!",
@@ -28,7 +28,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   const result = trinna(amount);
 
-  db.updateRngScore(
+  db.users.updateRngScore(
     interaction.user.id,
     interaction.guildId!,
     result.positive ? result.winnings : -amount,

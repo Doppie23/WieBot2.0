@@ -2,12 +2,13 @@ import { SlashCommandBuilder, userMention } from "discord.js";
 import type {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
-  GuildMember,
 } from "discord.js";
 import db from "../../db/db";
 import random from "../../utils/random";
-import { DbUser } from "../../db/Database";
 import { autocompleteRngUsers, getGuildMember } from "../../utils/interaction";
+import { DbUser } from "../../db/tables/UsersTable";
+
+export const timeout = 12 * 60 * 60; // 12 hours
 
 export const data = new SlashCommandBuilder()
   .setName("steel")
@@ -24,8 +25,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const targetId = interaction.options.getString("target");
   if (!targetId) throw new Error("targetId is undefined");
 
-  const user = db.getUser(interaction.user.id, interaction.guildId!);
-  const target = db.getUser(targetId, interaction.guildId!);
+  const user = db.users.getUser(interaction.user.id, interaction.guildId!);
+  const target = db.users.getUser(targetId, interaction.guildId!);
 
   if (!target || !user) throw new Error("user or target is undefined");
 
@@ -91,10 +92,10 @@ function steel(user: DbUser, target: DbUser): [boolean, number] {
   const guildId = user.guildId;
 
   if (winnerId === user.id) {
-    db.donate(target.id, user.id, guildId, addedScore);
+    db.users.donate(target.id, user.id, guildId, addedScore);
     return [true, addedScore];
   }
   const fine = addedScore * 2;
-  db.updateRngScore(user.id, guildId, -fine);
+  db.users.updateRngScore(user.id, guildId, -fine);
   return [false, fine];
 }

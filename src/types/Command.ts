@@ -9,4 +9,8 @@ export type Command = {
   execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
   autocomplete?: (interaction: AutocompleteInteraction) => Promise<void>;
   isRngCommand?: boolean;
+  /**
+   * Time in seconds a user has to wait before using the command again
+   */
+  timeout?: number;
 };

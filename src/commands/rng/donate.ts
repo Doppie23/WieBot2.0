@@ -28,8 +28,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const targetId = interaction.options.getString("target")!;
   const amount = interaction.options.getInteger("amount")!;
 
-  const user = db.getUser(interaction.user.id, interaction.guildId!);
-  const target = db.getUser(targetId, interaction.guildId!);
+  const user = db.users.getUser(interaction.user.id, interaction.guildId!);
+  const target = db.users.getUser(targetId, interaction.guildId!);
 
   if (!target || !user) throw new Error("user or target is undefined");
 
@@ -41,7 +41,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return;
   }
 
-  db.donate(user.id, targetId, interaction.guildId!, amount);
+  db.users.donate(user.id, targetId, interaction.guildId!, amount);
 
   await interaction.reply(
     `${userMention(

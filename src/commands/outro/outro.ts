@@ -89,7 +89,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   if (choice.isRng) {
     let allUsersInCall = true;
-    const usersNeeded = db.getAllRngUsers(interaction.guildId!);
+    const usersNeeded = db.users.getAllRngUsers(interaction.guildId!);
     for (const user of usersNeeded) {
       if (!members.some((member) => user.id === member.id)) {
         allUsersInCall = false;
@@ -154,14 +154,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     if (!lastLeft) throw new Error("Could not find last left member");
 
-    db.increaseOutroScore(lastLeft.id, lastLeft.guild.id);
+    db.users.increaseOutroScore(lastLeft.id, lastLeft.guild.id);
 
     if (!choice) return;
 
     if (!choice.isRng) {
       await interaction.followUp(userMention(lastLeft.id));
     } else {
-      if (!db.isRngUser(lastLeft.id, lastLeft.guild.id)) {
+      if (!db.users.isRngUser(lastLeft.id, lastLeft.guild.id)) {
         await interaction.followUp(
           `${userMention(
             lastLeft.id,
@@ -171,7 +171,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       }
 
       const score = getRngScore();
-      db.updateRngScore(lastLeft.id, lastLeft.guild.id, score);
+      db.users.updateRngScore(lastLeft.id, lastLeft.guild.id, score);
 
       const embed = new EmbedBuilder()
         .setTitle("Outro")

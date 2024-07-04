@@ -17,7 +17,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     .setColor("Random");
 
   const fields = [];
-  for (const user of db.getOutroScores(interaction.guild.id)) {
+  for (const user of db.users.getOutroScores(interaction.guild.id)) {
     const guildUser = await getGuildMember(interaction, user.id);
 
     if (!guildUser) continue;

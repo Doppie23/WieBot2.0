@@ -4,8 +4,7 @@ The patch for [`@discordjs/rest`](./patches/@discordjs+rest+2.2.0.patch) is need
 
 TODO:
 
-- paardenrace
-- timeouts
-  - steel
-  - luckywheel
 - add player command
+- scale points relative to biggest user
+  - outro
+  - luckywheel

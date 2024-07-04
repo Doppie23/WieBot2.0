@@ -48,7 +48,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     interaction,
     race: paardenrace,
     users: new Map(),
-    playersNeeded: db.getAllRngUsers(interaction.guildId!).length,
+    playersNeeded: db.users.getAllRngUsers(interaction.guildId!).length,
   };
 
   games.set(interaction.guildId!, game);
@@ -86,7 +86,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }, 180_000);
 
   paardCollector.on("collect", async (i) => {
-    if (!db.isRngUser(i.user.id, interaction.guildId!)) {
+    if (!db.users.isRngUser(i.user.id, interaction.guildId!)) {
       await i.reply({ content: "Je kan niet meedoen!", ephemeral: true });
       return;
     }
@@ -135,7 +135,7 @@ export async function onModalSubmit(interaction: ModalSubmitInteraction) {
     return;
   }
 
-  const dbUser = db.getUser(interaction.user.id, interaction.guildId!);
+  const dbUser = db.users.getUser(interaction.user.id, interaction.guildId!);
   if (!dbUser || !dbUser.rngScore) {
     await interaction.reply({
       content: "Je kan niet meedoen!",
@@ -216,9 +216,9 @@ async function startGame(game: Game, guilId: string) {
     if (user.paard.name === winner.name) {
       const winnings = user.amount * (1 / winner.probability) - user.amount;
 
-      db.updateRngScore(userId, guilId, winnings);
+      db.users.updateRngScore(userId, guilId, winnings);
     } else {
-      db.updateRngScore(userId, guilId, -user.amount);
+      db.users.updateRngScore(userId, guilId, -user.amount);
     }
   }
 

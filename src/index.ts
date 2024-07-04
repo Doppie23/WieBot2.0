@@ -23,7 +23,7 @@ export type Client = _Client & {
   commands: Collection<string, Command>;
 };
 
-const isProduction = process.env.NODE_ENV === "production";
+export const isProduction = process.env.NODE_ENV === "production";
 
 const client = new _Client({
   presence: { activities: [{ name: "You", type: ActivityType.Watching }] },
@@ -145,6 +145,6 @@ client.once(Events.ClientReady, (readyClient) => {
   console.log(`[INFO] Ready! Logged in as ${readyClient.user.username}`);
 });
 
-console.log(`[INFO] Using database ${db.name}`);
+console.log(`[INFO] Using database ${db.connection.name}`);
 
 client.login(token);

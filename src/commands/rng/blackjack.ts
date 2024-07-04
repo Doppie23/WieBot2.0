@@ -28,7 +28,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
   let amount = interaction.options.getInteger("amount")!;
 
-  const user = db.getUser(interaction.user.id, interaction.guildId!);
+  const user = db.users.getUser(interaction.user.id, interaction.guildId!);
   if (user!.rngScore! < amount) {
     await interaction.reply({
       content: "Je hebt te weinig punten!",
@@ -38,7 +38,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 
   const getDoubleDownStatus = () => {
-    const user = db.getUser(interaction.user.id, interaction.guildId!);
+    const user = db.users.getUser(interaction.user.id, interaction.guildId!);
     return {
       canDoubleDown: user!.rngScore! >= amount * 2,
       canAllIn: user!.rngScore! > amount,
@@ -144,9 +144,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const winner = blackjack.getWinner();
 
   if (winner === "player") {
-    db.updateRngScore(interaction.user.id, interaction.guildId!, amount);
+    db.users.updateRngScore(interaction.user.id, interaction.guildId!, amount);
   } else if (winner === "dealer") {
-    db.updateRngScore(interaction.user.id, interaction.guildId!, -amount);
+    db.users.updateRngScore(interaction.user.id, interaction.guildId!, -amount);
   }
 }
 
