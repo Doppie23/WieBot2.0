@@ -116,7 +116,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       await confirmation.deferUpdate();
     } catch (e) {
       // timeout
-      break;
+      await interaction.followUp({
+        content: "Je wachtte te lang.",
+        ephemeral: true,
+      });
+      return;
     }
   }
 
