@@ -1,6 +1,7 @@
 import { Interaction } from "discord.js";
 import { Client } from ".";
 import db from "./db/db";
+import { onModalSubmit as paardenRaceOnModalSubmit } from "./commands/rng/paardenrace";
 
 export default async function interactionHandler(
   client: Client,
@@ -66,5 +67,11 @@ export default async function interactionHandler(
     } catch (error) {
       console.error(error);
     }
+  } else if (interaction.isModalSubmit()) {
+    if (interaction.customId === "joinModal") {
+      paardenRaceOnModalSubmit(interaction);
+      return;
+    }
+    throw new Error("Unknown modal submit " + interaction.customId);
   }
 }
