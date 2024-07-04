@@ -74,10 +74,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   const response = await interaction.reply({
     embeds: [blackjack.createEmbed(interaction.user.displayName, amount)],
-    components: [canDoubleDown || canAllIn ? rowWithDoubleDown : row],
+    components: !blackjack.isGameOver
+      ? [canDoubleDown || canAllIn ? rowWithDoubleDown : row]
+      : undefined,
   });
 
-  while (blackjack.currentPlayer === "player" && !blackjack.isGameOver) {
+  while (blackjack.isPlayerTurn && !blackjack.isGameOver) {
     try {
       const confirmation = await response.awaitMessageComponent({
         filter: (i) => i.user.id === interaction.user.id,
@@ -97,19 +99,16 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         throw new Error("Game over");
       }
 
-      let action = confirmation.customId;
-
-      if (action === "doubleDown") {
+      if (confirmation.customId === "doubleDown") {
         const status = getDoubleDownStatus();
         if (status.canDoubleDown) {
           amount *= 2;
         } else if (status.canAllIn) {
           amount = status.score;
         }
-        action = "hit";
       }
 
-      blackjack.playerTurn(action === "hit" ? "hit" : "stand");
+      blackjack.playerTurn(confirmation.customId);
       await interaction.editReply({
         embeds: [blackjack.createEmbed(interaction.user.displayName, amount)],
         components: [row],
@@ -121,8 +120,19 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
   }
 
-  while (blackjack.currentPlayer === "dealer" && !blackjack.isGameOver) {
-    await new Promise((resolve) => setTimeout(resolve, 500));
+  if (blackjack.isGameOver) {
+    // remove buttons
+    interaction.editReply({
+      embeds: [blackjack.createEmbed(interaction.user.displayName, amount)],
+      components: [],
+    });
+  }
+
+  let firstDealerTurn = true;
+  while (blackjack.isDealerTurn && !blackjack.isGameOver) {
+    !firstDealerTurn &&
+      (await new Promise((resolve) => setTimeout(resolve, 500)));
+    firstDealerTurn = false;
 
     blackjack.dealerTurn();
     interaction.editReply({
@@ -130,11 +140,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       components: [],
     });
   }
-
-  interaction.editReply({
-    embeds: [blackjack.createEmbed(interaction.user.displayName, amount)],
-    components: [],
-  });
 
   const winner = blackjack.getWinner();
 
@@ -151,17 +156,18 @@ type Card = {
   number: string;
 };
 
-type Player = "player" | "dealer";
+type PlayerType = "player" | "dealer";
 
 class Blackjack {
   private deck: Card[];
 
-  private playerHand: Card[] = [];
-  private dealerHand: Card[] = [];
+  private player: Player;
+  private dealer: Player;
 
-  private currentTurn: Player = "player";
+  // private currentTurn: PlayerType = "player";
+  private currentPlayer: Player;
   private gameOver: boolean = false;
-  private winner: Player | null = null;
+  private winner: PlayerType | null = null;
 
   private status: string = "Spelers beurt.";
 
@@ -169,54 +175,91 @@ class Blackjack {
     this.deck = Blackjack.createDeck();
     random.shuffle(this.deck);
 
-    this.playerHand = [this.deck.pop()!, this.deck.pop()!];
-    if (this.hasBlackjack()) {
+    this.player = new Player([this.deck.pop()!, this.deck.pop()!]);
+    this.dealer = new Player([this.deck.pop()!, this.deck.pop()!]);
+
+    this.currentPlayer = this.player;
+    // this.player = new Player([
+    //   { number: "J", suit: "♠️", value: 10 },
+    //   { number: "J", suit: "♠️", value: 10 },
+    // ]);
+    // this.dealer = new Player([
+    //   { number: "J", suit: "♠️", value: 10 },
+    //   { number: "J", suit: "♠️", value: 10 },
+    // ]);
+
+    if (this.player.hasBlackjack && !this.dealer.hasBlackjack) {
       this.setWinner("player");
       this.status = "Speler heeft Blackjack!";
       return;
     }
 
-    this.dealerHand = [this.deck.pop()!, this.deck.pop()!];
+    if (this.dealer.hasBlackjack && this.player.hasBlackjack) {
+      this.setWinner(null);
+      this.status = "Gelijkspel.";
+      return;
+    }
   }
 
-  public get currentPlayer(): Player {
-    return this.currentTurn;
+  public get isPlayerTurn(): boolean {
+    return this.currentPlayer === this.player;
+  }
+
+  public get isDealerTurn(): boolean {
+    return this.currentPlayer === this.dealer;
   }
 
   public get isGameOver(): boolean {
     return this.gameOver;
   }
 
-  public getWinner(): Player | null {
+  public getWinner(): PlayerType | null {
     return this.winner;
   }
 
-  public playerTurn(action: "hit" | "stand"): void {
-    if (action === "hit") {
-      this.playerHand.push(this.deck.pop()!);
-      if (this.getHandValue(this.playerHand) > 21) {
+  private switchCurrentPlayer(): void {
+    this.currentPlayer =
+      this.currentPlayer === this.player ? this.dealer : this.player;
+  }
+
+  public playerTurn(action: "hit" | "stand" | "doubleDown"): void {
+    if (action === "hit" || action === "doubleDown") {
+      this.player.hand.push(this.deck.pop()!);
+      if (this.player.handValue > 21) {
         this.setWinner("dealer");
         this.status = "Speler is gebust.";
         return;
       }
-    } else {
-      this.currentTurn = "dealer";
+    }
+
+    if (action !== "hit") {
+      // this.currentTurn = "dealer";
+      this.switchCurrentPlayer();
+      this.status = "Dealers beurt.";
     }
   }
 
   public dealerTurn(): void {
-    this.status = "Dealers beurt.";
-    while (this.getHandValue(this.dealerHand) < 17) {
-      this.dealerHand.push(this.deck.pop()!);
-      if (this.getHandValue(this.dealerHand) > 21) {
-        this.setWinner("player");
-        this.status = "Dealer is gebust.";
-        return;
-      }
+    if (this.dealer.handValue >= 17) {
+      this.setFinalWinner();
+      return;
     }
 
-    const playerHandValue = this.getHandValue(this.playerHand);
-    const dealerHandValue = this.getHandValue(this.dealerHand);
+    this.dealer.hand.push(this.deck.pop()!);
+    if (this.dealer.handValue > 21) {
+      this.setWinner("player");
+      this.status = "Dealer is gebust.";
+      return;
+    }
+
+    if (this.dealer.handValue >= 17) {
+      this.setFinalWinner();
+    }
+  }
+
+  private setFinalWinner(): void {
+    const playerHandValue = this.player.handValue;
+    const dealerHandValue = this.dealer.handValue;
 
     if (playerHandValue === dealerHandValue) {
       this.setWinner(null);
@@ -230,10 +273,11 @@ class Blackjack {
     }
   }
 
-  private setWinner(winner: Player | null): void {
+  private setWinner(winner: PlayerType | null): void {
     this.gameOver = true;
     this.winner = winner;
-    this.currentTurn = "dealer";
+    // set turn to dealer, so all cards are shown
+    this.currentPlayer = this.dealer;
   }
 
   public createEmbed(name: string, amount: number): EmbedBuilder {
@@ -253,19 +297,15 @@ class Blackjack {
     const fields: RestOrArray<APIEmbedField> = [];
 
     fields.push({
-      name:
-        "Speler hand " +
-        (this.gameOver && ` (${this.getHandValue(this.playerHand)})`),
-      value: this.playerHand.map((card) => card.number + card.suit).join(", "),
+      name: "Speler hand " + (this.gameOver && ` (${this.player.handValue})`),
+      value: this.player.hand.map((card) => card.number + card.suit).join(", "),
     });
 
-    const hideDealerHand = this.currentTurn === "player";
+    const hideDealerHand = this.isPlayerTurn;
     if (!hideDealerHand) {
       fields.push({
-        name:
-          "Dealer hand " +
-          (this.gameOver && ` (${this.getHandValue(this.dealerHand)})`),
-        value: this.dealerHand
+        name: "Dealer hand " + (this.gameOver && ` (${this.dealer.handValue})`),
+        value: this.dealer.hand
           .map((card) => card.number + card.suit)
           .join(", "),
       });
@@ -273,35 +313,16 @@ class Blackjack {
       fields.push({
         name: "Dealer hand",
         value:
-          this.dealerHand[0]?.number! + this.dealerHand[0]?.suit! + ", " + "⬛",
+          this.dealer.hand[0]?.number! +
+          this.dealer.hand[0]?.suit! +
+          ", " +
+          "⬛",
       });
     }
 
     embed.addFields(fields);
 
     return embed;
-  }
-
-  private hasBlackjack(): boolean {
-    return (
-      this.getHandValue(this.playerHand) === 21 && this.playerHand.length === 2
-    );
-  }
-
-  private getHandValue(hand: Card[]): number {
-    let total = 0;
-    let numberOfAces = 0;
-    for (const card of hand) {
-      if (card.number === "A") {
-        numberOfAces++;
-      }
-      total += card.value;
-    }
-    while (total > 21 && numberOfAces > 0) {
-      total -= 10;
-      numberOfAces--;
-    }
-    return total;
   }
 
   private static createDeck(): Card[] {
@@ -335,5 +356,31 @@ class Blackjack {
     }
 
     return deck;
+  }
+}
+
+class Player {
+  public hand: Card[];
+  public hasBlackjack: boolean;
+
+  constructor(startingHand: [Card, Card]) {
+    this.hand = [startingHand[0], startingHand[1]];
+    this.hasBlackjack = this.handValue === 21;
+  }
+
+  public get handValue(): number {
+    let total = 0;
+    let numberOfAces = 0;
+    for (const card of this.hand) {
+      if (card.number === "A") {
+        numberOfAces++;
+      }
+      total += card.value;
+    }
+    while (total > 21 && numberOfAces > 0) {
+      total -= 10;
+      numberOfAces--;
+    }
+    return total;
   }
 }
