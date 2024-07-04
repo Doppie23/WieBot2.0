@@ -7,7 +7,7 @@ import type {
 import db from "../../db/db";
 import random from "../../utils/random";
 import { DbUser } from "../../db/Database";
-import { getGuildMember } from "../../utils/interaction";
+import { autocompleteRngUsers, getGuildMember } from "../../utils/interaction";
 
 export const data = new SlashCommandBuilder()
   .setName("steel")
@@ -57,22 +57,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 }
 
 export async function autocomplete(interaction: AutocompleteInteraction) {
-  const focusedValue = interaction.options.getFocused();
-  const users = db.getAllRngUsers(interaction.guildId!);
-
-  const guildUsers: GuildMember[] = [];
-  for (const user of users) {
-    const guildUser = await getGuildMember(interaction, user.id);
-    if (!guildUser || guildUser.id === interaction.user.id) continue;
-    guildUsers.push(guildUser);
-  }
-
-  const filtered = guildUsers.filter((user) =>
-    user.displayName.startsWith(focusedValue),
-  );
-  await interaction.respond(
-    filtered.map((choice) => ({ name: choice.displayName, value: choice.id })),
-  );
+  autocompleteRngUsers(interaction);
 }
 
 function steel(user: DbUser, target: DbUser): [boolean, number] {
