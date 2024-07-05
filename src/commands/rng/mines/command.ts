@@ -21,7 +21,7 @@ export const data = new SlashCommandBuilder()
       )
       .setRequired(true)
       .setMinValue(1)
-      .setMaxValue(15),
+      .setMaxValue(19),
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
@@ -38,18 +38,33 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   });
 
   while (!mines.isGameOver) {
-    const i = await response.awaitMessageComponent({
-      filter: (i) => i.user.id === interaction.user.id,
-      componentType: ComponentType.Button,
-      time: 180_000,
-    });
+    try {
+      const i = await response.awaitMessageComponent({
+        filter: (i) => i.user.id === interaction.user.id,
+        componentType: ComponentType.Button,
+        time: 180_000,
+      });
 
-    mines.handleClickInteraction(i);
-    await interaction.editReply({
-      embeds: [mines.createEmbed()],
-      components: mines.rows,
-    });
-    i.deferUpdate();
+      mines.handleClickInteraction(i);
+      await interaction.editReply({
+        embeds: [mines.createEmbed()],
+        components: mines.rows,
+      });
+      i.deferUpdate();
+    } catch (e) {
+      // timeout
+      db.users.updateRngScore(
+        interaction.user.id,
+        interaction.guildId!,
+        amount,
+      );
+      await interaction.followUp({
+        content: "Je wachtte te lang met het spelen.",
+        ephemeral: true,
+      });
+      await interaction.deleteReply();
+      return;
+    }
   }
 
   if (mines.isSuccess) {

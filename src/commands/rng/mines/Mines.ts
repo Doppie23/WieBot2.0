@@ -112,9 +112,7 @@ export class Mines {
   }
 
   public get payout(): number {
-    return this.mineClicked
-      ? 0
-      : Math.floor(this.getPayoutFactor() * this.amount);
+    return Math.floor(this.getPayoutFactor() * this.amount);
   }
 
   public get isSuccess(): boolean {
@@ -122,6 +120,8 @@ export class Mines {
   }
 
   private getPayoutFactor(): number {
+    if (this.mineClicked || this.diamondsClicked === 0) return 0;
+
     const mines = this.mineCount;
     const diamonds = this.diamondsClicked;
     const squares = this.squares.length;
