@@ -3,6 +3,9 @@ import type { ChatInputCommandInteraction } from "discord.js";
 import { Mines } from "./Mines";
 import db from "../../../db/db";
 
+const squaresX = 5;
+const squaresY = 4;
+
 export const data = new SlashCommandBuilder()
   .setName("mines")
   .setDescription("100% winrate")
@@ -21,14 +24,17 @@ export const data = new SlashCommandBuilder()
       )
       .setRequired(true)
       .setMinValue(1)
-      .setMaxValue(19),
+      .setMaxValue(squaresX * squaresY - 1),
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   const amount = interaction.options.getInteger("amount")!;
   const amountOfmines = interaction.options.getInteger("mines")!;
 
-  const mines = new Mines(amountOfmines, amount, interaction.user.displayName);
+  const mines = new Mines(amountOfmines, amount, interaction.user.displayName, {
+    squaresX,
+    squaresY,
+  });
 
   db.users.updateRngScore(interaction.user.id, interaction.guildId!, -amount);
 
@@ -59,10 +65,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         amount,
       );
       await interaction.followUp({
-        content: "Je wachtte te lang met het spelen.",
+        content:
+          "Je wachtte te lang met het spelen, je hebt je punten weer terug gekregen.",
         ephemeral: true,
       });
-      await interaction.deleteReply();
       return;
     }
   }

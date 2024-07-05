@@ -8,3 +8,5 @@ TODO:
 - scale points relative to biggest user
   - outro
   - luckywheel
+- logging with timestamps
+- config with two tokens, one for main and one for testen

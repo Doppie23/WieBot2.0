@@ -128,15 +128,16 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       await confirmation.deferUpdate();
     } catch (e) {
       // timeout
-      await interaction.followUp({
-        content: "Je wachtte te lang.",
-        ephemeral: true,
-      });
       db.users.updateRngScore(
         interaction.user.id,
         interaction.guildId!,
         amount,
       );
+      await interaction.followUp({
+        content:
+          "Je wachtte te lang met het spelen, je hebt je punten weer terug gekregen.",
+        ephemeral: true,
+      });
       return;
     }
   }

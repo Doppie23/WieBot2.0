@@ -12,11 +12,13 @@ const DIAMOND = "💎";
 const COVERED = "🟩";
 
 export class Mines {
-  private squaresX = 5;
-  private squaresY = 4;
+  private squaresX: number;
+  private squaresY: number;
   private squares: Square[] = [];
 
+  private diamondCount;
   private diamondsClicked = 0;
+
   private mineClicked = false;
   private userCashesOut = false;
 
@@ -33,7 +35,11 @@ export class Mines {
     private mineCount: number,
     private amount: number,
     private username: string,
+    options: { squaresX: number; squaresY: number },
   ) {
+    this.squaresX = options.squaresX;
+    this.squaresY = options.squaresY;
+
     if (this.squaresX > 5 || this.squaresY > 4) {
       throw new Error("Squares can't be bigger than 5x4");
     }
@@ -46,6 +52,8 @@ export class Mines {
       this.squares.push(square);
     }
     random.shuffle(this.squares);
+
+    this.diamondCount = this.squares.length - this.mineCount;
 
     // correct the index
     for (let i = 0; i < this.squares.length; i++) {
@@ -71,6 +79,7 @@ export class Mines {
   public handleClickInteraction(interaction: ButtonInteraction): void {
     if (interaction.customId === "cashout" || this.userCashesOut) {
       this.userCashesOut = true;
+      this.revealMines();
       return;
     }
 
@@ -84,25 +93,41 @@ export class Mines {
       square.click();
       if (square.isMine) {
         this.mineClicked = true;
+        this.revealMines();
+        return;
       } else {
         this.diamondsClicked++;
       }
     }
+
+    if (this.diamondsClicked === this.diamondCount) {
+      // no more diamonds left, player wins
+      this.userCashesOut = true;
+      this.revealMines();
+    }
+  }
+
+  private revealMines(): void {
+    for (const square of this.squares) {
+      square.click();
+      square.button.setDisabled(true);
+    }
+    this.cashoutRow.components.forEach((c) => c.setDisabled(true));
   }
 
   public createEmbed(): EmbedBuilder {
     return new EmbedBuilder()
-      .setTitle("Mines")
+      .setTitle(`Mines ${MINE}`)
       .setColor(this.mineClicked ? "Red" : "Green")
       .setDescription(`${this.username} heeft ${this.amount} punten ingezet.`)
       .setFields(
         {
-          name: `${MINE} Aantal mijnen:`,
-          value: this.mineCount.toString(),
+          name: `${DIAMOND} Diamanten gevonden`,
+          value: this.diamondsClicked + "/" + this.diamondCount,
         },
         {
           name: `💰 Payout (${this.getPayoutFactor().toFixed(2)})`,
-          value: this.payout.toString(),
+          value: `${this.payout.toString()} punten`,
         },
       );
   }
@@ -119,6 +144,7 @@ export class Mines {
     return !this.mineClicked;
   }
 
+  // https://calculatorscity.com/stake-mines-calculator/
   private getPayoutFactor(): number {
     if (this.mineClicked || this.diamondsClicked === 0) return 0;
 
