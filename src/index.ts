@@ -18,6 +18,7 @@ import {
   createAudioResource,
   joinVoiceChannel,
 } from "@discordjs/voice";
+import hmr from "node-hmr";
 
 export type Client = _Client & {
   commands: Collection<string, Command>;
@@ -67,16 +68,11 @@ for (const folder of commandFolders) {
 
     if (isProduction) continue;
 
-    fs.watch(filePath, () => {
-      console.log(`[INFO] ${file} changed, reloading...`);
-
+    hmr(async () => {
       delete require.cache[require.resolve(filePath)];
       const newCommand = require(filePath);
-
       client.commands.delete(command.data.name);
-      if (setCommand(file, newCommand, isRngCommand)) {
-        console.log(`[INFO] ${file} reloaded successfully!`);
-      }
+      setCommand(file, newCommand, isRngCommand);
     });
   }
 }

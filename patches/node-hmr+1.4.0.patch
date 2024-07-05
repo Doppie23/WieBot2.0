@@ -1,0 +1,14 @@
+diff --git a/node_modules/node-hmr/dist/hmr.js b/node_modules/node-hmr/dist/hmr.js
+index 0ceae25..d14bb2b 100644
+--- a/node_modules/node-hmr/dist/hmr.js
++++ b/node_modules/node-hmr/dist/hmr.js
+@@ -7,6 +7,9 @@ const path_1 = __importDefault(require("path"));
+ const chokidar_1 = __importDefault(require("chokidar"));
+ const buildParentTree = (module, parentChain = []) => {
+     const tree = {};
++    if (parentChain.includes(module.filename)) {
++        return tree;
++    }
+     tree[module.filename] = [...parentChain];
+     tree[module.filename].push(module.filename);
+     if (module.children.length) {

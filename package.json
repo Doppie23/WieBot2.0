@@ -24,6 +24,7 @@
     "cross-env": "^7.0.3",
     "discord.js": "^14.14.1",
     "libsodium-wrappers": "^0.7.13",
+    "node-hmr": "^1.4.0",
     "patch-package": "^8.0.0"
   },
   "devDependencies": {
