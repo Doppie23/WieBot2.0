@@ -65,7 +65,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     componentType: ComponentType.StringSelect,
     time: 180_000,
   });
-  setTimeout(() => {
+
+  paardCollector.on("end", () => {
     if (!game.started) {
       activeGames.delete(interaction.guildId!);
       interaction.deleteReply();
@@ -81,7 +82,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           ),
         );
     }
-  }, 10_000);
+  });
 
   paardCollector.on("collect", async (i) => {
     if (!db.users.isRngUser(i.user.id, interaction.guildId!)) {
@@ -155,7 +156,7 @@ async function getInputFromModal(
   game: GameInteractionHandler,
 ): Promise<number | undefined> {
   const dbUser = db.users.getUser(interaction.user.id, interaction.guildId!);
-  if (!dbUser || !dbUser.rngScore) {
+  if (!dbUser || (!dbUser.rngScore && dbUser.rngScore !== 0)) {
     await interaction.reply({
       content: "Je kan niet meedoen!",
       ephemeral: true,
