@@ -3,8 +3,8 @@ import type {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
 } from "discord.js";
-import db from "../../db/db";
-import { autocompleteRngUsers } from "../../utils/interaction";
+import db from "../../../db/db";
+import { autocompleteRngUsers } from "../../../utils/interaction";
 
 export const data = new SlashCommandBuilder()
   .setName("donate")

@@ -1,7 +1,7 @@
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
-import db from "../../db/db";
-import { getGuildMember } from "../../utils/interaction";
+import db from "../../../db/db";
+import { getGuildMember } from "../../../utils/interaction";
 
 export const data = new SlashCommandBuilder()
   .setName("outroleaderboard")

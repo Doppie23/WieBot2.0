@@ -3,10 +3,10 @@ import type {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
 } from "discord.js";
-import db from "../../db/db";
-import random from "../../utils/random";
-import { autocompleteRngUsers, getGuildMember } from "../../utils/interaction";
-import { DbUser } from "../../db/tables/UsersTable";
+import db from "../../../db/db";
+import random from "../../../utils/random";
+import { autocompleteRngUsers } from "../../../utils/interaction";
+import { DbUser } from "../../../db/tables/UsersTable";
 
 export const timeout = 12 * 60 * 60; // 12 hours
 

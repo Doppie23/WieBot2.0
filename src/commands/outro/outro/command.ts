@@ -7,8 +7,8 @@ import { EmbedBuilder, SlashCommandBuilder, userMention } from "discord.js";
 import path from "node:path";
 import fs from "node:fs";
 import type { ChatInputCommandInteraction, GuildMember } from "discord.js";
-import random from "../../utils/random";
-import db from "../../db/db";
+import random from "../../../utils/random";
+import db from "../../../db/db";
 
 const choices = [
   {
@@ -63,6 +63,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   const fileLocation = path.join(
     __dirname,
+    "..",
     "..",
     "..",
     "..",

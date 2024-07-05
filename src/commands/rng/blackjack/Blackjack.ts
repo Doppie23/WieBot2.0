@@ -1,158 +1,10 @@
 import {
-  ActionRowBuilder,
-  ButtonStyle,
+  APIEmbedField,
   ColorResolvable,
   EmbedBuilder,
-  SlashCommandBuilder,
-} from "discord.js";
-import {
-  APIEmbedField,
-  ButtonBuilder,
-  ChatInputCommandInteraction,
   RestOrArray,
 } from "discord.js";
-import db from "../../db/db";
-import random from "../../utils/random";
-
-export const data = new SlashCommandBuilder()
-  .setName("blackjack")
-  .setDescription("Unlimited Money Glitch 100% WORKING!!1!")
-  .addIntegerOption((option) =>
-    option
-      .setName("amount")
-      .setDescription("hoeveel?")
-      .setRequired(true)
-      .setMinValue(1),
-  );
-
-export async function execute(interaction: ChatInputCommandInteraction) {
-  let amount = interaction.options.getInteger("amount")!;
-
-  const user = db.users.getUser(interaction.user.id, interaction.guildId!);
-  if (user!.rngScore! < amount) {
-    await interaction.reply({
-      content: "Je hebt te weinig punten!",
-      ephemeral: true,
-    });
-    return;
-  }
-
-  const getDoubleDownStatus = () => {
-    const user = db.users.getUser(interaction.user.id, interaction.guildId!);
-    return {
-      canDoubleDown: user!.rngScore! >= amount * 2,
-      canAllIn: user!.rngScore! > amount,
-      score: user!.rngScore!,
-    };
-  };
-
-  const { canDoubleDown, canAllIn } = getDoubleDownStatus();
-
-  const hit = new ButtonBuilder()
-    .setCustomId("hit")
-    .setLabel("Hit")
-    .setStyle(ButtonStyle.Primary);
-
-  const stand = new ButtonBuilder()
-    .setCustomId("stand")
-    .setLabel("Stand")
-    .setStyle(ButtonStyle.Secondary);
-
-  const doubleDown = new ButtonBuilder()
-    .setCustomId("doubleDown")
-    .setLabel(canDoubleDown ? "Double Down" : "All In")
-    .setStyle(ButtonStyle.Danger);
-
-  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(hit, stand);
-  const rowWithDoubleDown = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    hit,
-    stand,
-    doubleDown,
-  );
-
-  const blackjack = new Blackjack();
-
-  const response = await interaction.reply({
-    embeds: [blackjack.createEmbed(interaction.user.displayName, amount)],
-    components: !blackjack.isGameOver
-      ? [canDoubleDown || canAllIn ? rowWithDoubleDown : row]
-      : undefined,
-  });
-
-  while (blackjack.isPlayerTurn && !blackjack.isGameOver) {
-    try {
-      const confirmation = await response.awaitMessageComponent({
-        filter: (i) => i.user.id === interaction.user.id,
-        time: 180_000,
-      });
-      if (
-        !(
-          confirmation.customId === "hit" ||
-          confirmation.customId === "stand" ||
-          confirmation.customId === "doubleDown"
-        )
-      ) {
-        throw new Error("Invalid component");
-      }
-
-      if (blackjack.isGameOver) {
-        throw new Error("Game over");
-      }
-
-      if (confirmation.customId === "doubleDown") {
-        const status = getDoubleDownStatus();
-        if (status.canDoubleDown) {
-          amount *= 2;
-        } else if (status.canAllIn) {
-          amount = status.score;
-        }
-      }
-
-      blackjack.playerTurn(confirmation.customId);
-      await interaction.editReply({
-        embeds: [blackjack.createEmbed(interaction.user.displayName, amount)],
-        components: [row],
-      });
-      await confirmation.deferUpdate();
-    } catch (e) {
-      // timeout
-      await interaction.followUp({
-        content: "Je wachtte te lang.",
-        ephemeral: true,
-      });
-      return;
-    }
-  }
-
-  if (blackjack.isGameOver) {
-    // remove buttons
-    interaction.editReply({
-      embeds: [blackjack.createEmbed(interaction.user.displayName, amount)],
-      components: [],
-    });
-  }
-
-  let firstDealerTurn = true;
-  while (blackjack.isDealerTurn && !blackjack.isGameOver) {
-    !firstDealerTurn &&
-      (await new Promise((resolve) => setTimeout(resolve, 500)));
-    firstDealerTurn = false;
-
-    blackjack.dealerTurn();
-    interaction.editReply({
-      embeds: [blackjack.createEmbed(interaction.user.displayName, amount)],
-      components: [],
-    });
-  }
-
-  const winner = blackjack.getWinner();
-
-  if (winner === "player") {
-    db.users.updateRngScore(interaction.user.id, interaction.guildId!, amount);
-  } else if (winner === "dealer") {
-    db.users.updateRngScore(interaction.user.id, interaction.guildId!, -amount);
-  }
-}
+import random from "../../../utils/random";
 
 type Card = {
   value: number;
@@ -162,7 +14,7 @@ type Card = {
 
 type PlayerType = "player" | "dealer";
 
-class Blackjack {
+export class Blackjack {
   private deck: Card[];
 
   private player: Player;
@@ -175,12 +27,12 @@ class Blackjack {
 
   private status: string = "Spelers beurt.";
 
-  constructor() {
+  constructor(playerName: string) {
     this.deck = Blackjack.createDeck();
     random.shuffle(this.deck);
 
-    this.player = new Player([this.deck.pop()!, this.deck.pop()!]);
-    this.dealer = new Player([this.deck.pop()!, this.deck.pop()!]);
+    this.player = new Player(playerName, [this.deck.pop()!, this.deck.pop()!]);
+    this.dealer = new Player("dealer", [this.deck.pop()!, this.deck.pop()!]);
 
     this.currentPlayer = this.player;
     // this.player = new Player([
@@ -231,7 +83,7 @@ class Blackjack {
       this.player.hand.push(this.deck.pop()!);
       if (this.player.handValue > 21) {
         this.setWinner("dealer");
-        this.status = "Speler is gebust.";
+        this.status = `${this.player.name} is gebust.`;
         return;
       }
     }
@@ -252,7 +104,7 @@ class Blackjack {
     this.dealer.hand.push(this.deck.pop()!);
     if (this.dealer.handValue > 21) {
       this.setWinner("player");
-      this.status = "Dealer is gebust.";
+      this.status = `${this.dealer.name} is gebust.`;
       return;
     }
 
@@ -270,10 +122,10 @@ class Blackjack {
       this.status = "Gelijkspel.";
     } else if (playerHandValue > dealerHandValue) {
       this.setWinner("player");
-      this.status = "Speler heeft gewonnen.";
+      this.status = `${this.player.name} heeft gewonnen.`;
     } else {
       this.setWinner("dealer");
-      this.status = "Dealer heeft gewonnen.";
+      this.status = `${this.dealer.name} heeft gewonnen.`;
     }
   }
 
@@ -284,7 +136,7 @@ class Blackjack {
     this.currentPlayer = this.dealer;
   }
 
-  public createEmbed(name: string, amount: number): EmbedBuilder {
+  public createEmbed(amount: number): EmbedBuilder {
     let color: ColorResolvable;
     if (!this.gameOver) {
       color = "Grey";
@@ -294,7 +146,7 @@ class Blackjack {
 
     const embed = new EmbedBuilder()
       .setTitle("Blackjack")
-      .setDescription(`${name} heeft ${amount} punten ingezet.`)
+      .setDescription(`${this.player.name} heeft ${amount} punten ingezet.`)
       .setColor(color)
       .setFooter({ text: this.status });
 
@@ -367,7 +219,7 @@ class Player {
   public hand: Card[];
   public hasBlackjack: boolean;
 
-  constructor(startingHand: [Card, Card]) {
+  constructor(public name: string, startingHand: [Card, Card]) {
     this.hand = [startingHand[0], startingHand[1]];
     this.hasBlackjack = this.handValue === 21;
   }

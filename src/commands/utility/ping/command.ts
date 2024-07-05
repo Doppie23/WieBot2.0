@@ -6,6 +6,6 @@ export const data = new SlashCommandBuilder()
   .setDescription("Replies with Pong!");
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  await interaction.reply("Pong!");
+  await interaction.reply("Pong! test");
   console.log(`Ponged: ${interaction.user.displayName}`);
 }

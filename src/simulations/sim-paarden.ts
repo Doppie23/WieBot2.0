@@ -1,10 +1,12 @@
-import { Paard, Paardenrace } from "../commands/rng/paardenrace";
+import { Paard, Paardenrace } from "../commands/rng/paardenrace/Paardenrace";
 
 const totalRaces = 100_000;
 
 const wins = new Map<string, number>();
-let winner: Paard | undefined = undefined;
+
 for (let i = 0; i < totalRaces; i++) {
+  let winner: Paard | undefined = undefined;
+
   const paardenrace = new Paardenrace();
   while (!winner) {
     winner = paardenrace.tick();
@@ -14,7 +16,6 @@ for (let i = 0; i < totalRaces; i++) {
   } else {
     wins.set(winner.name, 1);
   }
-  winner = undefined;
 }
 
 const results = [];

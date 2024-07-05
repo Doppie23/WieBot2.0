@@ -19,6 +19,7 @@ import {
   joinVoiceChannel,
 } from "@discordjs/voice";
 import hmr from "node-hmr";
+import { recFindFiles } from "./utils/interaction";
 
 export type Client = _Client & {
   commands: Collection<string, Command>;
@@ -34,7 +35,6 @@ const client = new _Client({
 client.commands = new Collection();
 
 const foldersPath = path.join(__dirname, "commands");
-const commandFolders = fs.readdirSync(foldersPath);
 
 const setCommand = (
   fileName: string,
@@ -52,29 +52,24 @@ const setCommand = (
   return false;
 };
 
-for (const folder of commandFolders) {
-  const commandsPath = path.join(foldersPath, folder);
-  const commandFiles = fs
-    .readdirSync(commandsPath)
-    .filter((file) => file.endsWith(".js"));
-  for (const file of commandFiles) {
-    const filePath = path.join(commandsPath, file);
-    const command = require(filePath);
+const commandFiles = recFindFiles("command.js", foldersPath);
 
-    const isRngCommand = commandsPath.includes("rng");
+for (const file of commandFiles) {
+  const command = require(file.path);
 
-    const success = setCommand(file, command, isRngCommand);
-    if (!success) continue;
+  const isRngCommand = file.path.includes("rng");
 
-    if (isProduction) continue;
+  const success = setCommand(file.name, command, isRngCommand);
+  if (!success) continue;
 
-    hmr(async () => {
-      delete require.cache[require.resolve(filePath)];
-      const newCommand = require(filePath);
-      client.commands.delete(command.data.name);
-      setCommand(file, newCommand, isRngCommand);
-    });
-  }
+  if (isProduction) continue;
+
+  hmr(async () => {
+    delete require.cache[require.resolve(file.path)];
+    const newCommand = require(file.path);
+    client.commands.delete(command.data.name);
+    setCommand(file.name, newCommand, isRngCommand);
+  });
 }
 
 client.on(Events.InteractionCreate, (interaction) => {
@@ -85,7 +80,8 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
   if (
     newState.channel === null ||
     oldState.channel === newState.channel ||
-    !isProduction
+    !isProduction ||
+    newState.client.user.id === client.user?.id
   )
     return;
 
