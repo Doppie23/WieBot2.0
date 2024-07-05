@@ -10,7 +10,7 @@ export const data = new SlashCommandBuilder()
   .addIntegerOption((option) =>
     option
       .setName("amount")
-      .setDescription("hoeveel?")
+      .setDescription("Hoeveel punten wil je inzetten?")
       .setRequired(true)
       .setMinValue(1),
   );
