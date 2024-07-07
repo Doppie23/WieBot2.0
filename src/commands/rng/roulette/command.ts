@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import db from "../../../db/db";
 import { createEmbed, RouletteOptions, spinRoulette } from "./roulette";
+import { getBetAmount } from "../../../utils/rngUtils";
 
 export const data = new SlashCommandBuilder()
   .setName("roulette")
@@ -34,7 +35,9 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const amount = interaction.options.getInteger("amount")!;
+  const amount = await getBetAmount(interaction);
+  if (amount === undefined) return;
+
   const type = interaction.options.getString("type")!;
   const number = interaction.options.getString("nummer");
 

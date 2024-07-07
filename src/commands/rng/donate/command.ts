@@ -5,6 +5,7 @@ import type {
 } from "discord.js";
 import db from "../../../db/db";
 import { autocompleteRngUsers } from "../../../utils/interaction";
+import { getBetAmount } from "../../../utils/rngUtils";
 
 export const data = new SlashCommandBuilder()
   .setName("donate")
@@ -25,23 +26,16 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const targetId = interaction.options.getString("target")!;
-  const amount = interaction.options.getInteger("amount")!;
+  const amount = await getBetAmount(interaction);
+  if (amount === undefined) return;
 
-  const user = db.users.getUser(interaction.user.id, interaction.guildId!);
+  const targetId = interaction.options.getString("target")!;
+
   const target = db.users.getUser(targetId, interaction.guildId!);
 
-  if (!target || !user) throw new Error("user or target is undefined");
+  if (!target) throw new Error("user or target is undefined");
 
-  if (user.rngScore! < amount) {
-    await interaction.reply({
-      content: "Zo rijk ben je nou ook weer niet.",
-      ephemeral: true,
-    });
-    return;
-  }
-
-  db.users.donate(user.id, targetId, interaction.guildId!, amount);
+  db.users.donate(interaction.user.id, targetId, interaction.guildId!, amount);
 
   await interaction.reply(
     `${userMention(

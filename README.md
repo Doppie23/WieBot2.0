@@ -9,4 +9,5 @@ TODO:
   - outro
   - luckywheel
 - logging with timestamps
-- config with two tokens, one for main and one for testen
+- log point for unhandled error
+- blackjack split

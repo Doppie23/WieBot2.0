@@ -1,8 +1,8 @@
-import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import db from "../../../db/db";
-import random from "../../../utils/random";
 import { createEmbed, trinna } from "./trinna";
+import { getBetAmount } from "../../../utils/rngUtils";
 
 export const data = new SlashCommandBuilder()
   .setName("trinna")
@@ -16,16 +16,8 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const amount = interaction.options.getInteger("amount")!;
-
-  const user = db.users.getUser(interaction.user.id, interaction.guildId!);
-  if (user!.rngScore! < amount) {
-    await interaction.reply({
-      content: "Je hebt te weinig punten!",
-      ephemeral: true,
-    });
-    return;
-  }
+  const amount = await getBetAmount(interaction);
+  if (amount === undefined) return;
 
   const result = trinna(amount);
 
