@@ -1,4 +1,5 @@
 import {
+  AudioPlayerStatus,
   createAudioPlayer,
   createAudioResource,
   joinVoiceChannel,
@@ -57,7 +58,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   if (!(choice && typeof value === "string")) {
     throw new Error(
-      `User (${interaction.user.displayName}) picked choice should not be possible: ${choice} from ${choices}`,
+      `User (${interaction.user.displayName}) picked choice should not be possible: ${choice?.name}`,
     );
   }
 
@@ -123,11 +124,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   connection.subscribe(player);
 
   player.on("error", (error) => {
-    throw new Error(`Something went wrong with the outro: ${error}`);
+    throw new Error("Something went wrong with the outro:", error);
   });
 
   player.on("stateChange", async (oldState, newState) => {
-    if (newState.status === "idle" && oldState.status === "playing") {
+    if (
+      newState.status === AudioPlayerStatus.Idle &&
+      oldState.status === AudioPlayerStatus.Playing
+    ) {
       await onStoppedPlaying();
     }
   });

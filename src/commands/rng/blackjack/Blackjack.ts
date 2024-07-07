@@ -169,10 +169,7 @@ export class Blackjack {
       fields.push({
         name: "Dealer hand",
         value:
-          this.dealer.hand[0]?.number! +
-          this.dealer.hand[0]?.suit! +
-          ", " +
-          "⬛",
+          this.dealer.hand[0]!.number + this.dealer.hand[0]!.suit + ", " + "⬛",
       });
     }
 

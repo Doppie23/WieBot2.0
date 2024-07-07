@@ -7,17 +7,17 @@ export function createEmbed(luckyWheel: LuckyWheel) {
     .setColor("Blue")
     .setFields([
       {
-        name: luckyWheel.currentOptions[0]?.toString()!,
+        name: luckyWheel.currentOptions[0]!.toString(),
         value: "🔹",
         inline: true,
       },
       {
-        name: luckyWheel.currentOptions[1]?.toString()!,
+        name: luckyWheel.currentOptions[1]!.toString(),
         value: "⬆",
         inline: true,
       },
       {
-        name: luckyWheel.currentOptions[2]?.toString()!,
+        name: luckyWheel.currentOptions[2]!.toString(),
         value: "🔹",
         inline: true,
       },

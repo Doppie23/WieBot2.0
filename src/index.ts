@@ -6,6 +6,7 @@ import {
   Collection,
   Events,
   GatewayIntentBits,
+  SlashCommandBuilder,
 } from "discord.js";
 import { token } from "../config.json";
 import db from "./db/db";
@@ -14,6 +15,7 @@ import type { Command } from "./types/Command";
 import interactionHandler from "./interaction-handler";
 import random from "./utils/random";
 import {
+  AudioPlayerStatus,
   createAudioPlayer,
   createAudioResource,
   joinVoiceChannel,
@@ -38,11 +40,22 @@ const foldersPath = path.join(__dirname, "commands");
 
 const setCommand = (
   fileName: string,
-  command: any,
+  command: unknown,
   isRngCommand: boolean,
 ): boolean => {
-  if ("data" in command && "execute" in command) {
-    client.commands.set(command.data.name, { ...command, isRngCommand });
+  if (
+    command &&
+    typeof command === "object" &&
+    "data" in command &&
+    "execute" in command &&
+    typeof (command as Command).execute === "function" &&
+    typeof (command as Command).data === "object" &&
+    (command as Command).data instanceof SlashCommandBuilder
+  ) {
+    client.commands.set((command as Command).data.name, {
+      ...(command as Command),
+      isRngCommand,
+    });
     return true;
   }
 
@@ -55,6 +68,7 @@ const setCommand = (
 const commandFiles = recFindFiles("command.js", foldersPath);
 
 for (const file of commandFiles) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment
   const command = require(file.path);
 
   const isRngCommand = file.path.includes("rng");
@@ -64,16 +78,18 @@ for (const file of commandFiles) {
 
   if (isProduction) continue;
 
-  hmr(async () => {
+  hmr(() => {
     delete require.cache[require.resolve(file.path)];
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment
     const newCommand = require(file.path);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
     client.commands.delete(command.data.name);
     setCommand(file.name, newCommand, isRngCommand);
   });
 }
 
-client.on(Events.InteractionCreate, (interaction) => {
-  interactionHandler(client, interaction);
+client.on(Events.InteractionCreate, async (interaction) => {
+  await interactionHandler(client, interaction);
 });
 
 client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
@@ -116,16 +132,19 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
     connection.subscribe(player);
 
     player.on("error", (error) => {
-      throw new Error(`Something went wrong with the outro: ${error}`);
+      throw new Error("Something went wrong with the outro:", error);
     });
 
-    player.on("stateChange", async (oldState, newState) => {
-      if (newState.status === "idle" && oldState.status === "playing") {
+    player.on("stateChange", (oldState, newState) => {
+      if (
+        newState.status === AudioPlayerStatus.Idle &&
+        oldState.status === AudioPlayerStatus.Playing
+      ) {
         connection.destroy();
       }
     });
   } catch (error) {
-    console.error(`[ERROR] Error with join sound: ${error}`);
+    console.error("[ERROR] Error with join sound:", error);
   }
 });
 
@@ -139,4 +158,6 @@ client.once(Events.ClientReady, (readyClient) => {
 
 console.log(`[INFO] Using database ${db.connection.name}`);
 
-client.login(token);
+client.login(token).catch((error) => {
+  console.error("[ERROR] Error starting client:", error);
+});

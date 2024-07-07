@@ -8,9 +8,9 @@ function choices<T>(population: T[], weights: number[]): T {
   }
 
   // Create the cumulative weights array
-  let cumWeights: number[] = [];
+  const cumWeights: number[] = [];
   let sum = 0;
-  for (let weight of weights) {
+  for (const weight of weights) {
     sum += weight;
     cumWeights.push(sum);
   }
@@ -19,7 +19,7 @@ function choices<T>(population: T[], weights: number[]): T {
     throw new Error("Total of weights must be greater than zero");
   }
 
-  let randomValue = Math.random() * sum;
+  const randomValue = Math.random() * sum;
   for (let i = 0; i < cumWeights.length; i++) {
     if (randomValue < cumWeights[i]!) {
       return population[i]!;
@@ -33,7 +33,7 @@ function choice<T>(population: T[]): T {
   return population[randrange(0, population.length - 1)]!;
 }
 
-function shuffle(array: any[]) {
+function shuffle(array: unknown[]) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];

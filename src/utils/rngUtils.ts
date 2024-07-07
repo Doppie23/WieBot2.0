@@ -57,7 +57,7 @@ export async function playRngGame(
   } catch (error) {
     db.users.updateRngScore(interaction.user.id, interaction.guildId!, amount);
 
-    if ((error as any).code === "InteractionCollectorError") {
+    if ((error as { code?: string }).code === "InteractionCollectorError") {
       await interaction.followUp({
         content:
           "Je wachtte te lang met het spelen, je hebt je punten weer terug gekregen.",

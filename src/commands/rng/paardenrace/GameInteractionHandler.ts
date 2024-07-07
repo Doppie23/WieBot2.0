@@ -71,14 +71,14 @@ export class GameInteractionHandler {
     return values;
   }
 
-  public addUser(
+  public async addUser(
     userId: string,
     username: string,
     paard: Paard,
     number: number,
   ) {
     this.users.set(userId, { name: username, paard, amount: number });
-    this.interaction.editReply({
+    await this.interaction.editReply({
       embeds: [this.createJoinEmbed()],
       components: this.everyoneJoined ? [] : undefined,
     });

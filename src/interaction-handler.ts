@@ -8,7 +8,7 @@ export default async function interactionHandler(
 ) {
   if (interaction.isChatInputCommand()) {
     if (interaction.guildId === undefined) {
-      interaction.reply("Wat ga je mij prive lopen appen dan...?");
+      await interaction.reply("Wat ga je mij prive lopen appen dan...?");
       return;
     }
 
@@ -60,7 +60,7 @@ export default async function interactionHandler(
     try {
       await command.execute(interaction);
     } catch (error) {
-      console.error("[ERROR] " + error);
+      console.error("[ERROR]", error);
       if (interaction.replied || interaction.deferred) {
         await interaction.followUp({
           content: "Er is iets grandioos fout gegaan...",

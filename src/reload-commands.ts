@@ -13,9 +13,11 @@ const commandFiles = recFindFiles("command.js", foldersPath);
 
 for (const file of commandFiles) {
   const filePath = file.path;
+  // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-unsafe-assignment
   const command = require(filePath);
 
   if ("data" in command && "execute" in command) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     commands.push(command.data.toJSON());
   } else {
     console.log(
@@ -28,7 +30,7 @@ for (const file of commandFiles) {
 const rest = new REST().setToken(token);
 
 // and deploy your commands!
-(async () => {
+await (async () => {
   try {
     console.log(
       `Started refreshing ${commands.length} application (/) commands.`,
@@ -41,7 +43,7 @@ const rest = new REST().setToken(token);
     );
 
     console.log(
-      // @ts-ignore
+      // @ts-expect-error 😃👍.
       `Successfully reloaded ${data.length} application (/) commands.`,
     );
   } catch (error) {

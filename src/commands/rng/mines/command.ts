@@ -57,12 +57,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         embeds: [mines.createEmbed()],
         components: mines.rows,
       });
-      i.deferUpdate();
+      await i.deferUpdate();
     }
 
     if (mines.isSuccess) {
       const payout = mines.payout;
-      interaction.followUp(
+      await interaction.followUp(
         `${userMention(interaction.user.id)} heeft ${payout} punten gewonnen!`,
       );
       db.users.updateRngScore(
@@ -71,7 +71,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         payout,
       );
     } else {
-      interaction.followUp(
+      await interaction.followUp(
         `${userMention(interaction.user.id)} heeft ${amount} punten verloren!`,
       );
     }

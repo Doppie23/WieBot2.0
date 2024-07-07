@@ -58,7 +58,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 }
 
 export async function autocomplete(interaction: AutocompleteInteraction) {
-  autocompleteRngUsers(interaction);
+  await autocompleteRngUsers(interaction);
 }
 
 function steel(user: DbUser, target: DbUser): [boolean, number] {

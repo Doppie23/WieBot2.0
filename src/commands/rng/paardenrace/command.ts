@@ -66,10 +66,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     time: 180_000,
   });
 
-  paardCollector.on("end", () => {
+  paardCollector.on("end", async () => {
     if (!game.started) {
       activeGames.delete(interaction.guildId!);
-      interaction.deleteReply();
+      await interaction.deleteReply();
 
       // refund users
       game
@@ -113,7 +113,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         ]),
       ]);
 
-    i.showModal(modal);
+    await i.showModal(modal);
 
     i.awaitModalSubmit({
       time: 60_000,
@@ -123,18 +123,18 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const amount = await getInputFromModal(interaction, game);
         if (!amount) return;
 
-        game.addUser(i.user.id, i.user.displayName, paard, amount);
         db.users.updateRngScore(
           interaction.user.id,
           interaction.guildId!,
           -amount,
         );
+        await game.addUser(i.user.id, i.user.displayName, paard, amount);
 
         await interaction.deferUpdate();
 
         if (game.everyoneJoined) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
-          game.playGame((winners) => {
+          await game.playGame((winners) => {
             for (const winner of winners) {
               db.users.updateRngScore(
                 winner.id,
@@ -147,7 +147,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           });
         }
       })
-      .catch((_) => undefined);
+      .catch(() => undefined);
   });
 }
 

@@ -81,7 +81,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return;
   }
 
-  let outcome = spinRoulette(options);
+  const outcome = spinRoulette(options);
   db.users.updateRngScore(
     interaction.user.id,
     interaction.guildId!,

@@ -19,7 +19,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   let amount = await getBetAmount(interaction);
   if (amount === undefined) return;
 
-  await playRngGame(interaction, amount, async (amount) => {
+  await playRngGame(interaction, amount, async () => {
+    amount = amount!; // IDK why but typescript..., it should be fine because we check if amount is undefined above
+
     const getDoubleDownStatus = (amount: number) => {
       const user = db.users.getUser(interaction.user.id, interaction.guildId!);
       return {
@@ -96,11 +98,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           amount = status.score;
         } else {
           // user can't double down or all in, but still hit the button
-          confirmation.reply({
+          await confirmation.reply({
             content: "Hier heb je niet genoeg punten voor.",
             ephemeral: true,
           });
-          interaction.editReply({
+          await interaction.editReply({
             embeds: [blackjack.createEmbed(amount)],
             components: [row],
           });
@@ -118,7 +120,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     if (blackjack.isGameOver) {
       // remove buttons
-      interaction.editReply({
+      await interaction.editReply({
         embeds: [blackjack.createEmbed(amount)],
         components: [],
       });
@@ -131,7 +133,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       firstDealerTurn = false;
 
       blackjack.dealerTurn();
-      interaction.editReply({
+      await interaction.editReply({
         embeds: [blackjack.createEmbed(amount)],
         components: [],
       });
