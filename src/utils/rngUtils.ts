@@ -85,3 +85,29 @@ export async function playRngGame(
     throw error;
   }
 }
+
+/**
+ * Return a scale factor based on the current highest score
+ *
+ * Factor will be at least 1
+ *
+ * @argument zerosToRemove How many zeros to remove from the scale factor
+ *
+ * @example
+ * console.log(getScaleFactor("<guildId>", 2)); // highest score is 5308
+ * // 10
+ * console.log(getScaleFactor("<guildId>", 0)); // highest score is 135
+ * // 100
+ */
+export function getScaleFactor(
+  guildId: string,
+  zerosToRemove: number = 0,
+): number {
+  const highestScore = db.users.getHighestRngScore(guildId);
+  if (highestScore <= 0) return 1;
+
+  return Math.max(
+    1,
+    Math.pow(10, Math.floor(Math.log10(highestScore)) - zerosToRemove),
+  );
+}

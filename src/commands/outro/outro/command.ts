@@ -10,6 +10,7 @@ import fs from "node:fs";
 import type { ChatInputCommandInteraction, GuildMember } from "discord.js";
 import random from "../../../utils/random";
 import db from "../../../db/db";
+import { getScaleFactor } from "../../../utils/rngUtils";
 
 const choices = [
   {
@@ -175,7 +176,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         return;
       }
 
-      const score = getRngScore();
+      const score = getRngScore(interaction.guildId!);
       db.users.updateRngScore(lastLeft.id, lastLeft.guild.id, score);
 
       const embed = new EmbedBuilder()
@@ -192,13 +193,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 }
 
-function getRngScore() {
+function getRngScore(guildId: string) {
+  const scaleFactor = getScaleFactor(guildId, 2);
+
   // hoofdprijs
   if (random.choices([true, false], [1, 20])) {
-    return 1000;
+    return 1000 * scaleFactor;
   }
 
   const score = random.randrange(5, 100);
   const positive = random.choices([true, false], [9, 1]);
-  return score * (positive ? 1 : -1);
+  return score * (positive ? 1 : -1) * scaleFactor;
 }

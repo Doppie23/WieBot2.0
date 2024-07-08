@@ -38,7 +38,7 @@ export default class TimeoutsTable {
   public timeRemaining(userId: string, guildId: string, commandName: string) {
     const result = this.db
       .prepare(
-        "SELECT timeout FROM Timeouts WHERE userId = ? AND guildId = ? AND commandName = ?",
+        "SELECT timeout FROM Timeouts WHERE userId = ? AND guildId = ? AND commandName = ? LIMIT 1",
       )
       .get(userId, guildId, commandName) as { timeout: number } | undefined;
 

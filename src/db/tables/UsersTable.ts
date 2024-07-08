@@ -98,6 +98,19 @@ export default class UsersTable {
       .all(guildId) as DbUser[];
   }
 
+  /**
+   * Returns 0 if there are no users with a RNG score
+   */
+  getHighestRngScore(guildId: string): number {
+    const score = this.db
+      .prepare(
+        "SELECT rngScore FROM Users WHERE guildId = ? AND rngScore IS NOT NULL ORDER BY rngScore DESC LIMIT 1",
+      )
+      .get(guildId) as { rngScore: number } | undefined;
+
+    return score?.rngScore ?? 0;
+  }
+
   isRngUser(id: string, guildId: string): boolean {
     const user = this.getUser(id, guildId);
 
@@ -107,8 +120,17 @@ export default class UsersTable {
   }
 
   updateRngScore(id: string, guildId: string, amount: number) {
-    if (!this.isRngUser(id, guildId)) {
+    if (amount === 0) return;
+
+    const user = this.getUser(id, guildId);
+
+    if (!user || user.rngScore === null) {
       throw new Error("User " + id + " is not a RNG user");
+    }
+
+    // score cant go below 0
+    if (amount < 0 && user.rngScore < -amount) {
+      amount = -user.rngScore;
     }
 
     const result = this.db

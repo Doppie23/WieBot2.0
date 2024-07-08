@@ -10,7 +10,6 @@ import {
 } from "discord.js";
 import { token } from "../config.json";
 import db from "./db/db";
-
 import type { Command } from "./types/Command";
 import interactionHandler from "./interaction-handler";
 import random from "./utils/random";

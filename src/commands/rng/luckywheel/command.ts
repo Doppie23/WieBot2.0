@@ -11,7 +11,7 @@ export const data = new SlashCommandBuilder()
   .setDescription("Altijd prijs!!!");
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const luckyWheel = new LuckyWheel();
+  const luckyWheel = new LuckyWheel(interaction.guildId!);
 
   await interaction.reply({ embeds: [createEmbed(luckyWheel)] });
   let sleepTime = 0.1;

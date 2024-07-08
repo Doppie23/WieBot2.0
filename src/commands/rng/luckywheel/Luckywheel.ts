@@ -1,10 +1,11 @@
 import random from "../../../utils/random";
+import { getScaleFactor } from "../../../utils/rngUtils";
 
 export class LuckyWheel {
   private readonly options: number[];
   private bigWinAvailable: boolean = true;
 
-  constructor() {
+  constructor(private guildId: string) {
     this.options = this.createRandomOptionsArray(3);
   }
 
@@ -17,17 +18,19 @@ export class LuckyWheel {
   }
 
   private getRandomOption(): number {
+    const scaleFactor = getScaleFactor(this.guildId, 2);
+
     if (this.bigWinAvailable) {
       const bigWin = random.choices([false, true], [9, 1]);
       if (bigWin) {
         this.bigWinAvailable = false;
-        return 5000;
+        return 500 * scaleFactor;
       }
     }
 
     const option = random.randrange(5, 100);
     const positive = random.choices([true, false], [9, 1]);
-    return option * (positive ? 1 : -1);
+    return option * (positive ? 1 : -1) * scaleFactor;
   }
 
   get currentOptions() {
