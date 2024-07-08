@@ -48,14 +48,32 @@ export async function getBetAmount(
 export async function playRngGame(
   interaction: ChatInputCommandInteraction,
   amount: number,
-  cb: (amount: number) => Promise<void>,
+  cb: (
+    amount: number,
+    increaseBetAmount: (amountToAdd: number) => void,
+  ) => Promise<void>,
 ) {
   db.users.updateRngScore(interaction.user.id, interaction.guildId!, -amount);
 
+  let amountToRetrunOnError = amount;
+
+  const increaseBetAmount = (amountToAdd: number) => {
+    db.users.updateRngScore(
+      interaction.user.id,
+      interaction.guildId!,
+      -amountToAdd,
+    );
+    amountToRetrunOnError += amountToAdd;
+  };
+
   try {
-    await cb(amount);
+    await cb(amount, increaseBetAmount);
   } catch (error) {
-    db.users.updateRngScore(interaction.user.id, interaction.guildId!, amount);
+    db.users.updateRngScore(
+      interaction.user.id,
+      interaction.guildId!,
+      amountToRetrunOnError,
+    );
 
     if ((error as { code?: string }).code === "InteractionCollectorError") {
       await interaction.followUp({
