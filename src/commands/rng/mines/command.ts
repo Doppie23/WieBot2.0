@@ -1,4 +1,4 @@
-import { ComponentType, SlashCommandBuilder, userMention } from "discord.js";
+import { ComponentType, SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { Mines } from "./Mines";
 import db from "../../../db/db";
@@ -6,6 +6,9 @@ import { getBetAmount, playRngGame } from "../../../utils/rngUtils";
 
 const squaresX = 5;
 const squaresY = 4;
+
+const minMines = 1;
+const maxMines = squaresX * squaresY - 1;
 
 export const data = new SlashCommandBuilder()
   .setName("mines")
@@ -21,11 +24,11 @@ export const data = new SlashCommandBuilder()
     option
       .setName("mines")
       .setDescription(
-        "Met hoeveel mijnen wil je spelen? Meer mijnen == hogere payout.",
+        `Met hoeveel mijnen wil je spelen? Meer mijnen == hogere payout. (MIN: ${minMines}, MAX: ${maxMines})`,
       )
       .setRequired(true)
-      .setMinValue(1)
-      .setMaxValue(squaresX * squaresY - 1),
+      .setMinValue(minMines)
+      .setMaxValue(maxMines),
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
@@ -61,18 +64,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     if (mines.isSuccess) {
-      const payout = mines.payout;
-      await interaction.followUp(
-        `${userMention(interaction.user.id)} heeft ${payout} punten gewonnen!`,
-      );
       db.users.updateRngScore(
         interaction.user.id,
         interaction.guildId!,
-        payout,
-      );
-    } else {
-      await interaction.followUp(
-        `${userMention(interaction.user.id)} heeft ${amount} punten verloren!`,
+        mines.payout,
       );
     }
   });

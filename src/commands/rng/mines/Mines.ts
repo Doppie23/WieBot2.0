@@ -116,20 +116,35 @@ export class Mines {
   }
 
   public createEmbed(): EmbedBuilder {
-    return new EmbedBuilder()
+    const embed = new EmbedBuilder()
       .setTitle(`Mines ${MINE}`)
-      .setColor(this.mineClicked ? "Red" : "Green")
+      .setColor(!this.isGameOver ? "Green" : !this.isSuccess ? "Red" : "Green")
       .setDescription(`${this.username} heeft ${this.amount} punten ingezet.`)
-      .setFields(
-        {
-          name: `${DIAMOND} Diamanten gevonden`,
-          value: this.diamondsClicked + "/" + this.diamondCount,
-        },
-        {
-          name: `💰 Payout (${this.getPayoutFactor().toFixed(2)})`,
-          value: `${this.payout.toString()} punten`,
-        },
-      );
+      .setFields();
+
+    const fields = [
+      {
+        name: `${DIAMOND} Diamanten gevonden`,
+        value: this.diamondsClicked + "/" + this.diamondCount,
+      },
+      {
+        name: `💰 Payout (${this.getPayoutFactor().toFixed(2)})`,
+        value: `${this.payout.toString()} punten`,
+      },
+    ];
+
+    if (this.isGameOver) {
+      fields.push({
+        name: "🏁 Resultaat",
+        value: this.isSuccess
+          ? `${this.username} heeft ${this.payout} punten gewonnen!`
+          : `${this.username} heeft ${this.amount} punten verloren!`,
+      });
+    }
+
+    embed.setFields(fields);
+
+    return embed;
   }
 
   public get isGameOver(): boolean {
@@ -141,7 +156,7 @@ export class Mines {
   }
 
   public get isSuccess(): boolean {
-    return !this.mineClicked;
+    return !this.mineClicked && this.payout > 0;
   }
 
   // https://calculatorscity.com/stake-mines-calculator/
