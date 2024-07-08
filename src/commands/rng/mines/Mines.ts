@@ -87,17 +87,15 @@ export class Mines {
     if (isNaN(index)) return;
 
     const square = this.squares[index];
-    if (!square) return;
+    if (!square || square.isClicked) return;
 
-    if (!square.isClicked) {
-      square.click();
-      if (square.isMine) {
-        this.mineClicked = true;
-        this.revealMines();
-        return;
-      } else {
-        this.diamondsClicked++;
-      }
+    square.click();
+    if (square.isMine) {
+      this.mineClicked = true;
+      this.revealMines();
+      return;
+    } else {
+      this.diamondsClicked++;
     }
 
     if (this.diamondsClicked === this.diamondCount) {
@@ -109,7 +107,7 @@ export class Mines {
 
   private revealMines(): void {
     for (const square of this.squares) {
-      square.click();
+      square.reveal();
       square.button.setDisabled(true);
     }
     this.cashoutRow.components.forEach((c) => c.setDisabled(true));
@@ -207,5 +205,13 @@ class Square {
   public click(): void {
     this.button.setLabel(this.isMine ? MINE : DIAMOND);
     this.isClicked = true;
+  }
+
+  public reveal(): void {
+    const wasClicked = this.isClicked;
+    this.click();
+    if (wasClicked) {
+      this.button.setStyle(ButtonStyle.Success);
+    }
   }
 }

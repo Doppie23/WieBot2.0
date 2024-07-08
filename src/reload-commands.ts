@@ -30,7 +30,8 @@ for (const file of commandFiles) {
 const rest = new REST().setToken(token);
 
 // and deploy your commands!
-await (async () => {
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+(async () => {
   try {
     console.log(
       `Started refreshing ${commands.length} application (/) commands.`,

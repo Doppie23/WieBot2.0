@@ -24,7 +24,7 @@ export const data = new SlashCommandBuilder()
     option
       .setName("mines")
       .setDescription(
-        `Met hoeveel mijnen wil je spelen? Meer mijnen == hogere payout. (MIN: ${minMines}, MAX: ${maxMines})`,
+        `(MIN: ${minMines}, MAX: ${maxMines}) Meer mijnen == hogere payout.`,
       )
       .setRequired(true)
       .setMinValue(minMines)
