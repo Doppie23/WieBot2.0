@@ -20,7 +20,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   let amount = await getBetAmount(interaction);
   if (amount === undefined) return;
 
-  await playRngGame(interaction, amount, async (_, increaseBetAmount) => {
+  await playRngGame(interaction, amount, async (increaseBetAmount) => {
     amount = amount!; // IDK why but typescript..., it should be fine because we check if amount is undefined above
 
     const canBetAmount = (amount: number) => {
@@ -28,18 +28,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return user!.rngScore! >= amount;
     };
 
-    const canDoubleDown = canBetAmount(amount);
-
     const blackjack = new Blackjack(interaction.user.displayName, amount);
 
-    let row = createRow(canDoubleDown, blackjack.canSplit && canDoubleDown);
+    let row = createRow(blackjack, canBetAmount(amount));
 
     const response = await interaction.reply({
       embeds: [createEmbed(blackjack)],
       components: !blackjack.isGameOver ? [row] : undefined,
     });
 
-    let firstPlayerTurn = true;
     while (!blackjack.isGameOver) {
       if (blackjack.isPlayerTurn) {
         const confirmation = await response.awaitMessageComponent({
@@ -55,11 +52,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           )
         ) {
           throw new Error("Invalid component");
-        }
-
-        if (firstPlayerTurn) {
-          row = createRow(false, false); // disable all extra buttons
-          firstPlayerTurn = false;
         }
 
         switch (confirmation.customId) {
@@ -87,6 +79,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             break;
         }
 
+        row = createRow(blackjack, canBetAmount(amount)); // update extra buttons, like double down and split
+
         await confirmation.deferUpdate();
       } else {
         await new Promise((resolve) => setTimeout(resolve, 500));
@@ -99,9 +93,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       });
     }
 
-    const { winnings, playerWon } = blackjack.getWinnings();
+    const { winnings } = blackjack.getWinnings();
 
-    if (playerWon) {
+    if (winnings > 0) {
       db.users.updateRngScore(
         interaction.user.id,
         interaction.guildId!,

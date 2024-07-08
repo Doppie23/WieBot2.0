@@ -2,7 +2,6 @@ import random from "../../../utils/random";
 
 type Winnings = {
   winnings: number;
-  playerWon: boolean;
   nettoWinnings: number;
 };
 
@@ -36,44 +35,56 @@ export class Blackjack {
   private winnings: Winnings | undefined;
 
   constructor(playerName: string, betAmount: number) {
-    // for testing
-    // eslint-disable-next-line no-constant-condition
-    if (true) {
-      this.deck = Blackjack.createDeck();
-      random.shuffle(this.deck);
+    // // for testing
+    // // eslint-disable-next-line no-constant-condition
+    // if (true) {
+    this.deck = Blackjack.createDeck();
+    random.shuffle(this.deck);
 
-      this.playerHands = [
-        new Hand([this.deck.pop()!, this.deck.pop()!], playerName, betAmount),
-      ];
-      this.dealerHand = new Hand(
-        [this.deck.pop()!, this.deck.pop()!],
-        "dealer",
-      );
-    } else {
-      this.deck = [
-        new Card("♠️", "8"), //
-        new Card("♠️", "6"), //
-        new Card("♠️", "A"), //
-      ];
+    this.playerHands = [
+      new Hand([this.deck.pop()!, this.deck.pop()!], playerName, betAmount),
+    ];
+    this.dealerHand = new Hand([this.deck.pop()!, this.deck.pop()!], "dealer");
+    // } else {
+    //   this.deck = [
+    //     new Card("♠️", "6"), //
+    //     new Card("♠️", "A"), //
+    //     new Card("♠️", "2"), //
+    //     new Card("♠️", "2"), //
+    //     new Card("♠️", "2"), //
+    //     new Card("♠️", "10"), //
+    //     new Card("♠️", "10"), //
+    //     new Card("♠️", "8"), //
+    //     new Card("♠️", "8"), //
+    //     new Card("♠️", "10"), //
+    //     new Card("♠️", "10"), //
+    //     new Card("♠️", "10"), //
+    //     new Card("♠️", "10"), //
+    //     new Card("♠️", "10"), //
+    //     new Card("♠️", "10"), //
+    //     new Card("♠️", "10"), //
+    //     new Card("♠️", "10"), //
+    //     new Card("♠️", "10"), //
+    //   ];
 
-      this.playerHands = [
-        new Hand(
-          [
-            new Card("♠️", "10"), //
-            new Card("♠️", "10"), //
-          ],
-          playerName,
-          betAmount,
-        ),
-      ];
-      this.dealerHand = new Hand(
-        [
-          new Card("♠️", "4"), //
-          new Card("♠️", "5"), //
-        ],
-        "dealer",
-      );
-    }
+    //   this.playerHands = [
+    //     new Hand(
+    //       [
+    //         new Card("♠️", "10"), //
+    //         new Card("♠️", "10"), //
+    //       ],
+    //       playerName,
+    //       betAmount,
+    //     ),
+    //   ];
+    //   this.dealerHand = new Hand(
+    //     [
+    //       new Card("♠️", "4"), //
+    //       new Card("♠️", "5"), //
+    //     ],
+    //     "dealer",
+    //   );
+    // }
 
     this.statusMsg = `${this.playerHands[0].name}'s beurt.`;
 
@@ -88,12 +99,14 @@ export class Blackjack {
     }
   }
 
-  public get canSplit(): boolean {
-    return this.playerHands[0].canSplit;
-  }
-
   public get isPlayerTurn(): boolean {
     return this.playerHandIndex < this.playerHands.length;
+  }
+
+  public get currentHand(): Hand {
+    if (!this.isPlayerTurn) throw new Error("not player turn");
+
+    return this.playerHands[this.playerHandIndex]!;
   }
 
   public hit(): void {
@@ -102,30 +115,44 @@ export class Blackjack {
 
     this.playerHands[this.playerHandIndex]!.cards.push(this.deck.pop()!);
     if (this.playerHands[this.playerHandIndex]!.value > 21) {
-      this.playerHandIndex++;
+      this.nextHand();
     }
   }
 
   public stand(): void {
-    this.playerHandIndex++;
+    this.nextHand();
   }
 
   public doubleDown(): void {
     if (!this.isPlayerTurn) throw new Error("Not player turn");
 
-    this.playerHands[this.playerHandIndex]!.betAmount *= 2;
+    const thisIndex = this.playerHandIndex;
+
+    this.playerHands[thisIndex]!.betAmount *= 2;
     this.hit();
-    this.stand();
+    if (this.playerHandIndex === thisIndex) {
+      // if still on the same hand
+      this.stand();
+    }
+  }
+
+  private nextHand(): void {
+    this.playerHandIndex++;
+    if (this.playerHandIndex < this.playerHands.length) {
+      if (this.currentHand.hasBlackjack) {
+        this.nextHand();
+      }
+    }
   }
 
   public split(): void {
-    if (!this.canSplit || this.playerHands[0].cards.length !== 2) {
+    if (!this.currentHand.canSplit || this.currentHand.cards.length !== 2) {
       throw new Error(
         `Player cannot split hand: ${this.playerHands[0].toString()}`,
       );
     }
 
-    const currHand = this.playerHands[0];
+    const currHand = this.currentHand;
     const hand1 = new Hand(
       [currHand.cards[0], this.deck.pop()!],
       currHand.name,
@@ -136,13 +163,12 @@ export class Blackjack {
       currHand.name,
       currHand.betAmount,
     );
-    this.playerHands = [hand1, hand2];
 
-    if (this.playerHands[0].hasBlackjack) {
-      this.playerHandIndex++;
-      if (this.playerHands[1]!.hasBlackjack) {
-        this.playerHandIndex++;
-      }
+    this.playerHands[this.playerHandIndex] = hand1;
+    this.playerHands.push(hand2);
+
+    if (this.playerHands[this.playerHandIndex]!.hasBlackjack) {
+      this.nextHand();
     }
   }
 
@@ -170,11 +196,12 @@ export class Blackjack {
         .nettoWinnings} punten verloren!`;
       return;
     } else {
-      this.statusMsg = this.winnings!.playerWon
-        ? `${this.playerHands[0].name} heeft ${
-            this.winnings!.nettoWinnings
-          } punten gewonnen!`
-        : "Dealer heeft gewonnen!";
+      this.statusMsg =
+        this.winnings!.nettoWinnings > 0
+          ? `${this.playerHands[0].name} heeft ${
+              this.winnings!.nettoWinnings
+            } punten gewonnen!`
+          : "Dealer heeft gewonnen!";
     }
   }
 
@@ -231,7 +258,7 @@ export class Blackjack {
 
     const nettoWinnings = winnings - totalBetAmount;
 
-    this.winnings = { winnings, playerWon: winnings > 0, nettoWinnings };
+    this.winnings = { winnings, nettoWinnings };
   }
 
   /**
@@ -265,7 +292,6 @@ class Hand {
   public cards: [Card, Card, ...Card[]];
 
   public hasBlackjack: boolean;
-  public canSplit: boolean;
 
   constructor(
     startingHand: [Card, Card],
@@ -274,7 +300,14 @@ class Hand {
   ) {
     this.cards = [startingHand[0], startingHand[1]];
     this.hasBlackjack = this.value === 21;
-    this.canSplit = startingHand[0].value === startingHand[1].value;
+  }
+
+  public get canSplit(): boolean {
+    return this.canDoubleDown && this.cards[0].value === this.cards[1].value;
+  }
+
+  public get canDoubleDown(): boolean {
+    return this.cards.length === 2;
   }
 
   public get value(): number {

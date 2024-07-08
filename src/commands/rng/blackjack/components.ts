@@ -14,7 +14,7 @@ export function createEmbed(blackjack: Blackjack): EmbedBuilder {
     .setColor(
       !blackjack.isGameOver
         ? "Grey"
-        : blackjack.getWinnings().playerWon
+        : blackjack.getWinnings().nettoWinnings > 0
         ? "Green"
         : "Red",
     );
@@ -55,9 +55,17 @@ export function createEmbed(blackjack: Blackjack): EmbedBuilder {
 }
 
 export function createRow(
-  canDoubleDown: boolean,
-  canSplit: boolean,
+  blackjack: Blackjack,
+  hasEnoughPoints: boolean,
 ): ActionRowBuilder<ButtonBuilder> {
+  const canDoubleDown =
+    blackjack.isPlayerTurn &&
+    blackjack.currentHand.canDoubleDown &&
+    hasEnoughPoints;
+
+  const canSplit =
+    blackjack.isPlayerTurn && blackjack.currentHand.canSplit && hasEnoughPoints;
+
   const hit = new ButtonBuilder()
     .setCustomId("hit")
     .setLabel("Hit")

@@ -48,10 +48,7 @@ export async function getBetAmount(
 export async function playRngGame(
   interaction: ChatInputCommandInteraction,
   amount: number,
-  cb: (
-    amount: number,
-    increaseBetAmount: (amountToAdd: number) => void,
-  ) => Promise<void>,
+  cb: (increaseBetAmount: (amountToAdd: number) => void) => Promise<void>,
 ) {
   db.users.updateRngScore(interaction.user.id, interaction.guildId!, -amount);
 
@@ -67,7 +64,7 @@ export async function playRngGame(
   };
 
   try {
-    await cb(amount, increaseBetAmount);
+    await cb(increaseBetAmount);
   } catch (error) {
     db.users.updateRngScore(
       interaction.user.id,
