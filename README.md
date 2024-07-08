@@ -10,6 +10,7 @@ Successor to [WieBot](https://github.com/Doppie23/WieBot).
 - Outro
   - Plays a user picked song from predefined options and kicks everyone from the voice channel when the song is finished.
   - Also keeps track of a seperate scoring system based on who was kicked last.
+- Plays a random sound from [`join-sounds/`](./join-sounds/) when a user joins a voice channel.
 
 ## Patch
 
