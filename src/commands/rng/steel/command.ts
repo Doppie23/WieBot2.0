@@ -1,11 +1,15 @@
-import { SlashCommandBuilder, userMention } from "discord.js";
+import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import type {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
+  GuildMember,
 } from "discord.js";
 import db from "../../../db/db";
 import random from "../../../utils/random";
-import { autocompleteRngUsers } from "../../../utils/interaction";
+import {
+  autocompleteRngUsers,
+  getGuildMember,
+} from "../../../utils/interaction";
 import { DbUser } from "../../../db/tables/UsersTable";
 
 export const timeout = 12 * 60 * 60; // 12 hours
@@ -38,30 +42,26 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return;
   }
 
-  const [success, dScore] = steel(user, target);
+  const result = steel(user, target);
 
-  if (success) {
-    await interaction.reply(
-      `${userMention(
-        interaction.user.id,
-      )} heeft zojuist ${dScore} punten gestolen van ${userMention(targetId)}.`,
-    );
-  } else {
-    await interaction.reply(
-      `${userMention(
-        interaction.user.id,
-      )} probeerde zojuist te stelen van ${userMention(
-        targetId,
-      )}, maar heeft gefaald. Nu moet hij een boete betalen van ${dScore} punten.`,
-    );
-  }
+  await interaction.reply({
+    embeds: [
+      createEmbed(
+        interaction.user.displayName,
+        await getGuildMember(interaction, targetId),
+        result,
+      ),
+    ],
+  });
 }
 
 export async function autocomplete(interaction: AutocompleteInteraction) {
   await autocompleteRngUsers(interaction);
 }
 
-function steel(user: DbUser, target: DbUser): [boolean, number] {
+type SteelResult = { success: boolean; score: number };
+
+function steel(user: DbUser, target: DbUser): SteelResult {
   let userScore = user.rngScore!;
   let targetScore = target.rngScore!;
 
@@ -93,9 +93,48 @@ function steel(user: DbUser, target: DbUser): [boolean, number] {
 
   if (winnerId === user.id) {
     db.users.donate(target.id, user.id, guildId, addedScore);
-    return [true, addedScore];
+    return { success: true, score: addedScore };
   }
   const fine = addedScore * 2;
   db.users.updateRngScore(user.id, guildId, -fine);
-  return [false, fine];
+  return { success: false, score: fine };
+}
+
+function createEmbed(
+  userName: string,
+  target: GuildMember,
+  result: SteelResult,
+): EmbedBuilder {
+  const embed = new EmbedBuilder()
+    .setTitle("Steel")
+    .setThumbnail(target.user.displayAvatarURL());
+
+  if (result.success) {
+    return embed
+      .setColor("Green")
+      .setDescription(`${userName} heeft gestolen van ${target.displayName}.`)
+      .addFields(
+        {
+          name: `🔪🩸 ${target.displayName}`,
+          value: `-${result.score} punten`,
+        },
+        {
+          name: `🏃‍♀️ ${userName}`,
+          value: `+${result.score} punten`,
+        },
+      );
+  } else {
+    return embed
+      .setColor("Red")
+      .setDescription(
+        `${userName} probeerde zojuist te stelen van ${target.displayName}. Maar, de wouten hadden hem in de smiezen. 🚔`,
+      )
+      .addFields({
+        name: "💸 Boete",
+        value: `${result.score} punten`,
+      })
+      .setFooter({
+        text: `#free${userName}`,
+      });
+  }
 }

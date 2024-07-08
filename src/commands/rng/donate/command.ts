@@ -1,10 +1,13 @@
-import { SlashCommandBuilder, userMention } from "discord.js";
+import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
 import type {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
 } from "discord.js";
 import db from "../../../db/db";
-import { autocompleteRngUsers } from "../../../utils/interaction";
+import {
+  autocompleteRngUsers,
+  getGuildMember,
+} from "../../../utils/interaction";
 import { getBetAmount } from "../../../utils/rngUtils";
 
 export const data = new SlashCommandBuilder()
@@ -37,13 +40,40 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   db.users.donate(interaction.user.id, targetId, interaction.guildId!, amount);
 
-  await interaction.reply(
-    `${userMention(
-      interaction.user.id,
-    )} heeft ${amount} punten gedoneerd aan ${userMention(targetId)}.`,
-  );
+  await interaction.reply({
+    embeds: [
+      createEmbed(
+        interaction.user.displayName,
+        (
+          await getGuildMember(interaction, targetId)
+        ).displayName,
+        amount,
+      ),
+    ],
+  });
 }
 
 export async function autocomplete(interaction: AutocompleteInteraction) {
   await autocompleteRngUsers(interaction);
+}
+
+function createEmbed(
+  userName: string,
+  targetName: string,
+  amount: number,
+): EmbedBuilder {
+  return new EmbedBuilder()
+    .setTitle("Doneer")
+    .setDescription(`${userName} heeft gedoneerd aan ${targetName}.`)
+    .setColor("Blue")
+    .addFields(
+      {
+        name: `📤 ${userName}`,
+        value: `-${amount} punten`,
+      },
+      {
+        name: `📥 ${targetName}`,
+        value: `+${amount} punten`,
+      },
+    );
 }
