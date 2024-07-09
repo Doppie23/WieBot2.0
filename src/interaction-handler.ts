@@ -60,7 +60,7 @@ export default async function interactionHandler(
     try {
       await command.execute(interaction);
     } catch (error) {
-      console.error("[ERROR]", error);
+      console.error(`[ERROR] in interaction ${interaction.commandName}`, error);
       if (interaction.replied || interaction.deferred) {
         await interaction.followUp({
           content: "Er is iets grandioos fout gegaan...",
@@ -89,7 +89,10 @@ export default async function interactionHandler(
 
       await command.autocomplete(interaction);
     } catch (error) {
-      console.error(error);
+      console.error(
+        `[ERROR] Error in autocomplete ${interaction.commandName}`,
+        error,
+      );
     }
   }
 }
