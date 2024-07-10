@@ -1,8 +1,7 @@
 import { ComponentType, SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { Mines } from "./Mines";
-import db from "../../../db/db";
-import { getBetAmount, playRngGame } from "../../../utils/rngUtils";
+import * as rng from "../../../helpers/RngHelper";
 
 const squaresX = 5;
 const squaresY = 4;
@@ -32,7 +31,7 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const amount = await getBetAmount(interaction);
+  const amount = await rng.getBetAmount(interaction);
   if (amount === undefined) return;
 
   const amountOfmines = interaction.options.getInteger("mines")!;
@@ -42,7 +41,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     squaresY,
   });
 
-  await playRngGame(interaction, amount, async () => {
+  await rng.playRngGame(interaction, amount, async () => {
     const response = await interaction.reply({
       embeds: [mines.createEmbed()],
       components: mines.rows,
@@ -64,11 +63,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     if (mines.isSuccess) {
-      db.users.updateRngScore(
-        interaction.user.id,
-        interaction.guildId!,
-        mines.payout,
-      );
+      rng.updateScore(interaction.user.id, interaction.guildId!, mines.payout);
     }
   });
 }

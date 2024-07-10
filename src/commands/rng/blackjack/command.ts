@@ -2,7 +2,7 @@ import { SlashCommandBuilder } from "discord.js";
 import { ChatInputCommandInteraction } from "discord.js";
 import db from "../../../db/db";
 import { Blackjack } from "./Blackjack";
-import { getBetAmount, playRngGame } from "../../../utils/rngUtils";
+import * as rng from "../../../helpers/RngHelper";
 import { createEmbed, createRow } from "./components";
 
 export const data = new SlashCommandBuilder()
@@ -17,10 +17,10 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  let amount = await getBetAmount(interaction);
+  let amount = await rng.getBetAmount(interaction);
   if (amount === undefined) return;
 
-  await playRngGame(interaction, amount, async (increaseBetAmount) => {
+  await rng.playRngGame(interaction, amount, async (increaseBetAmount) => {
     amount = amount!; // IDK why but typescript..., it should be fine because we check if amount is undefined above
 
     const canBetAmount = (amount: number) => {
@@ -96,11 +96,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const { winnings } = blackjack.getWinnings();
 
     if (winnings > 0) {
-      db.users.updateRngScore(
-        interaction.user.id,
-        interaction.guildId!,
-        winnings,
-      );
+      rng.updateScore(interaction.user.id, interaction.guildId!, winnings);
     }
   });
 }

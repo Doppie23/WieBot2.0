@@ -10,7 +10,7 @@ import fs from "node:fs";
 import type { ChatInputCommandInteraction, GuildMember } from "discord.js";
 import random from "../../../utils/random";
 import db from "../../../db/db";
-import { getScaleFactor } from "../../../utils/rngUtils";
+import * as rng from "../../../helpers/RngHelper";
 
 const choices = [
   {
@@ -177,7 +177,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       }
 
       const score = getRngScore(interaction.guildId!);
-      db.users.updateRngScore(lastLeft.id, lastLeft.guild.id, score);
+      rng.updateScore(lastLeft.id, lastLeft.guild.id, score);
 
       const embed = new EmbedBuilder()
         .setTitle("Outro")
@@ -194,7 +194,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 }
 
 function getRngScore(guildId: string) {
-  const scaleFactor = getScaleFactor(guildId, 2);
+  const scaleFactor = rng.getScaleFactor(guildId, 2);
 
   // hoofdprijs
   if (random.choices([true, false], [1, 20])) {

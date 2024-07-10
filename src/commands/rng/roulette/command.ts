@@ -1,8 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
-import db from "../../../db/db";
 import { createEmbed, RouletteOptions, spinRoulette } from "./roulette";
-import { getBetAmount } from "../../../utils/rngUtils";
+import * as rng from "../../../helpers/RngHelper";
 
 export const data = new SlashCommandBuilder()
   .setName("roulette")
@@ -35,7 +34,7 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const amount = await getBetAmount(interaction);
+  const amount = await rng.getBetAmount(interaction);
   if (amount === undefined) return;
 
   const type = interaction.options.getString("type")!;
@@ -72,17 +71,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     };
   }
 
-  const user = db.users.getUser(interaction.user.id, interaction.guildId!);
-  if (user!.rngScore! < options.amount) {
-    await interaction.reply({
-      content: "Je hebt te weinig punten!",
-      ephemeral: true,
-    });
-    return;
-  }
-
   const outcome = spinRoulette(options);
-  db.users.updateRngScore(
+
+  rng.updateScore(
     interaction.user.id,
     interaction.guildId!,
     outcome.success ? outcome.winnings : -options.amount,

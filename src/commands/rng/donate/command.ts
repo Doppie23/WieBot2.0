@@ -8,7 +8,7 @@ import {
   autocompleteRngUsers,
   getGuildMember,
 } from "../../../utils/interaction";
-import { getBetAmount } from "../../../utils/rngUtils";
+import * as rng from "../../../helpers/RngHelper";
 
 export const data = new SlashCommandBuilder()
   .setName("donate")
@@ -29,7 +29,7 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const amount = await getBetAmount(interaction);
+  const amount = await rng.getBetAmount(interaction);
   if (amount === undefined) return;
 
   const targetId = interaction.options.getString("target")!;

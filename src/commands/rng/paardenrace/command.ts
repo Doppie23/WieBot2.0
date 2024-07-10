@@ -13,6 +13,7 @@ import type {
   ModalSubmitInteraction,
 } from "discord.js";
 import db from "../../../db/db";
+import * as rng from "../../../helpers/RngHelper";
 import { GameInteractionHandler } from "./GameInteractionHandler";
 
 /**
@@ -123,11 +124,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         const amount = await getInputFromModal(interaction, game);
         if (!amount) return;
 
-        db.users.updateRngScore(
-          interaction.user.id,
-          interaction.guildId!,
-          -amount,
-        );
+        rng.updateScore(interaction.user.id, interaction.guildId!, -amount);
         await game.addUser(i.user.id, i.user.displayName, paard, amount);
 
         await interaction.deferUpdate();
@@ -136,11 +133,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
           await game.playGame((winners) => {
             for (const winner of winners) {
-              db.users.updateRngScore(
-                winner.id,
-                interaction.guildId!,
-                winner.winnings,
-              );
+              rng.updateScore(winner.id, interaction.guildId!, winner.winnings);
             }
 
             activeGames.delete(interaction.guildId!);

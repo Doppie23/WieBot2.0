@@ -50,7 +50,7 @@ export async function playRngGame(
   amount: number,
   cb: (increaseBetAmount: (amountToAdd: number) => void) => Promise<void>,
 ) {
-  db.users.updateRngScore(interaction.user.id, interaction.guildId!, -amount);
+  updateScore(interaction.user.id, interaction.guildId!, -amount);
 
   let amountToRetrunOnError = amount;
 
@@ -83,6 +83,28 @@ export async function playRngGame(
 
     // unknow error
     throw error;
+  }
+}
+
+/**
+ * Updates the user's score and keeps track of the session
+ */
+export function updateScore(userId: string, guildId: string, amount: number) {
+  try {
+    keepTrackOfSession(userId, guildId);
+  } catch (e) {
+    console.error("Error while keeping track of session", e);
+  }
+
+  db.users.updateRngScore(userId, guildId, amount);
+}
+
+function keepTrackOfSession(userId: string, guildId: string) {
+  if (!db.rngSessions.hasActiveSession(userId, guildId)) {
+    const user = db.users.getUser(userId, guildId);
+    db.rngSessions.startSession(userId, guildId, user!.rngScore!);
+  } else {
+    db.rngSessions.refreshSession(userId, guildId);
   }
 }
 

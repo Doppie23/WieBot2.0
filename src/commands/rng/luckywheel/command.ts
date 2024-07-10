@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
-import db from "../../../db/db";
+import * as rng from "../../../helpers/RngHelper";
 import { LuckyWheel } from "./Luckywheel";
 import { createEmbed } from "./createEmbed";
 
@@ -26,7 +26,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   const score = luckyWheel.currentOptions[1]!;
 
-  db.users.updateRngScore(interaction.user.id, interaction.guildId!, score);
+  rng.updateScore(interaction.user.id, interaction.guildId!, score);
 
   await interaction.followUp(`Je hebt ${score} punten gewonnen.`);
 }

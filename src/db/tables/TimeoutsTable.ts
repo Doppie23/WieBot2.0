@@ -11,11 +11,12 @@ export default class TimeoutsTable {
         `
         CREATE TABLE IF NOT EXISTS Timeouts
         (
-          userId      TEXT NOT NULL,
-          guildId     TEXT NOT NULL,
+          userId      TEXT,
+          guildId     TEXT,
           commandName TEXT NOT NULL,
           timeout     INT  NOT NULL,
           PRIMARY KEY (userId, guildId, commandName)
+          FOREIGN KEY (userId, guildId) REFERENCES Users (id, guildId)
         );
       `,
       )

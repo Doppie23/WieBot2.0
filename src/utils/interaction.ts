@@ -21,22 +21,24 @@ export async function autocompleteRngUsers(
   const focusedValue = interaction.options.getFocused();
   const users = db.users.getAllRngUsers(interaction.guildId!);
 
-  const guildUsers: GuildMember[] = [];
-  for (const user of users) {
-    const guildUser = await getGuildMember(interaction, user.id);
-    if (!guildUser || guildUser.id === interaction.user.id) continue;
-    guildUsers.push(guildUser);
-  }
-
-  const filtered = guildUsers.filter((user) =>
-    user.displayName.startsWith(focusedValue),
+  const guildUsers = await Promise.all(
+    users.map(async (user) => {
+      const guildUser = await getGuildMember(interaction, user.id);
+      if (!guildUser || guildUser.id === interaction.user.id) return undefined;
+      return guildUser;
+    }),
   );
+
+  const filtered = guildUsers.filter(
+    (user) => user !== undefined && user.displayName.startsWith(focusedValue),
+  ) as GuildMember[];
+
   await interaction.respond(
     filtered.map((choice) => ({ name: choice.displayName, value: choice.id })),
   );
 }
 
-export function recFindFiles(filename: string, dir: string) {
+export function recFindFiles(filename: string = "command.ts", dir: string) {
   const filePaths: { name: string; path: string }[] = [];
 
   const files = fs.readdirSync(dir);

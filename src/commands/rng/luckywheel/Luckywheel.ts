@@ -1,5 +1,5 @@
 import random from "../../../utils/random";
-import { getScaleFactor } from "../../../utils/rngUtils";
+import * as rng from "../../../helpers/RngHelper";
 
 export class LuckyWheel {
   private readonly options: number[];
@@ -18,7 +18,7 @@ export class LuckyWheel {
   }
 
   private getRandomOption(): number {
-    const scaleFactor = getScaleFactor(this.guildId, 2);
+    const scaleFactor = rng.getScaleFactor(this.guildId, 2);
 
     if (this.bigWinAvailable) {
       const bigWin = random.choices([false, true], [9, 1]);

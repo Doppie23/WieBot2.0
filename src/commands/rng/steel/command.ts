@@ -11,6 +11,7 @@ import {
   getGuildMember,
 } from "../../../utils/interaction";
 import { DbUser } from "../../../db/tables/UsersTable";
+import * as rng from "../../../helpers/RngHelper";
 
 export const timeout = 12 * 60 * 60; // 12 hours
 
@@ -92,11 +93,13 @@ function steel(user: DbUser, target: DbUser): SteelResult {
   const guildId = user.guildId;
 
   if (winnerId === user.id) {
-    db.users.donate(target.id, user.id, guildId, addedScore);
+    db.users.updateRngScore(target.id, guildId, -addedScore);
+    // only add this steal to session score for user not target
+    rng.updateScore(user.id, guildId, addedScore);
     return { success: true, score: addedScore };
   }
   const fine = addedScore * 2;
-  db.users.updateRngScore(user.id, guildId, -fine);
+  rng.updateScore(user.id, guildId, -fine);
   return { success: false, score: fine };
 }
 
