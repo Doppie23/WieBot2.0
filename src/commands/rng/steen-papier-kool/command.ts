@@ -3,7 +3,7 @@ import type {
   APIApplicationCommandOptionChoice,
   ChatInputCommandInteraction,
 } from "discord.js";
-import * as rng from "../../../helpers/RngHelper";
+import rng from "../../../helpers/RngHelper";
 import random from "../../../utils/random";
 
 const options = [

@@ -1,5 +1,5 @@
 import random from "../../../utils/random";
-import * as rng from "../../../helpers/RngHelper";
+import rng from "../../../helpers/RngHelper";
 
 export class LuckyWheel {
   private readonly options: number[];

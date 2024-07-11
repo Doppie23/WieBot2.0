@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { createEmbed, RouletteOptions, spinRoulette } from "./roulette";
-import * as rng from "../../../helpers/RngHelper";
+import rng from "../../../helpers/RngHelper";
 
 export const data = new SlashCommandBuilder()
   .setName("roulette")

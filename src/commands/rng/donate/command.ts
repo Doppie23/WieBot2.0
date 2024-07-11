@@ -8,7 +8,7 @@ import {
   autocompleteRngUsers,
   getGuildMember,
 } from "../../../utils/interaction";
-import * as rng from "../../../helpers/RngHelper";
+import rng from "../../../helpers/RngHelper";
 
 export const data = new SlashCommandBuilder()
   .setName("donate")

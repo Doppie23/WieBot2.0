@@ -5,7 +5,7 @@ import db from "../db/db";
  * Gets the user provided bet amount using the interaction
  * @returns undefined if the user does not have enough points, or something else went wrong
  */
-export async function getBetAmount(
+async function getBetAmount(
   interaction: ChatInputCommandInteraction,
   fieldName: string = "amount",
 ): Promise<number | undefined> {
@@ -45,7 +45,7 @@ export async function getBetAmount(
  * When an error occurs, the bet amount is put back in the user's score and the interaction is replied to
  * @param cb callback where the game is played
  */
-export async function playRngGame(
+async function playRngGame(
   interaction: ChatInputCommandInteraction,
   amount: number,
   cb: (increaseBetAmount: (amountToAdd: number) => void) => Promise<void>,
@@ -89,7 +89,7 @@ export async function playRngGame(
 /**
  * Updates the user's score and keeps track of the session
  */
-export function updateScore(userId: string, guildId: string, amount: number) {
+function updateScore(userId: string, guildId: string, amount: number) {
   try {
     keepTrackOfSession(userId, guildId);
   } catch (e) {
@@ -121,10 +121,7 @@ function keepTrackOfSession(userId: string, guildId: string) {
  * console.log(getScaleFactor("<guildId>", 0)); // highest score is 135
  * // 100
  */
-export function getScaleFactor(
-  guildId: string,
-  zerosToRemove: number = 0,
-): number {
+function getScaleFactor(guildId: string, zerosToRemove: number = 0): number {
   const highestScore = db.users.getHighestRngScore(guildId);
   if (highestScore <= 0) return 1;
 
@@ -133,3 +130,13 @@ export function getScaleFactor(
     Math.pow(10, Math.floor(Math.log10(highestScore)) - zerosToRemove),
   );
 }
+
+const rng = {
+  getBetAmount,
+  playRngGame,
+  updateScore,
+  keepTrackOfSession,
+  getScaleFactor,
+};
+
+export default rng;

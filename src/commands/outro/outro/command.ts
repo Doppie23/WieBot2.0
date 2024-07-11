@@ -10,7 +10,7 @@ import fs from "node:fs";
 import type { ChatInputCommandInteraction, GuildMember } from "discord.js";
 import random from "../../../utils/random";
 import db from "../../../db/db";
-import * as rng from "../../../helpers/RngHelper";
+import rng from "../../../helpers/RngHelper";
 
 const choices = [
   {

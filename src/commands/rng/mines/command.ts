@@ -1,7 +1,7 @@
 import { ComponentType, SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { Mines } from "./Mines";
-import * as rng from "../../../helpers/RngHelper";
+import rng from "../../../helpers/RngHelper";
 
 const squaresX = 5;
 const squaresY = 4;

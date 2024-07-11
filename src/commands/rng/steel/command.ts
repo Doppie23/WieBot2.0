@@ -11,7 +11,7 @@ import {
   getGuildMember,
 } from "../../../utils/interaction";
 import { DbUser } from "../../../db/tables/UsersTable";
-import * as rng from "../../../helpers/RngHelper";
+import rng from "../../../helpers/RngHelper";
 
 export const timeout = 12 * 60 * 60; // 12 hours
 

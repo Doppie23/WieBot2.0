@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
-import * as rng from "../../../helpers/RngHelper";
+import rng from "../../../helpers/RngHelper";
 import { LuckyWheel } from "./Luckywheel";
 import { createEmbed } from "./createEmbed";
 

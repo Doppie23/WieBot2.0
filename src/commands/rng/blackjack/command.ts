@@ -2,7 +2,7 @@ import { SlashCommandBuilder } from "discord.js";
 import { ChatInputCommandInteraction } from "discord.js";
 import db from "../../../db/db";
 import { Blackjack } from "./Blackjack";
-import * as rng from "../../../helpers/RngHelper";
+import rng from "../../../helpers/RngHelper";
 import { createEmbed, createRow } from "./components";
 
 export const data = new SlashCommandBuilder()

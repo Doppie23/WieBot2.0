@@ -13,7 +13,7 @@ import type {
   ModalSubmitInteraction,
 } from "discord.js";
 import db from "../../../db/db";
-import * as rng from "../../../helpers/RngHelper";
+import rng from "../../../helpers/RngHelper";
 import { GameInteractionHandler } from "./GameInteractionHandler";
 
 /**
