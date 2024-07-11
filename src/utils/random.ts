@@ -29,7 +29,7 @@ function choices<T>(population: T[], weights: number[]): T {
   throw new Error("Could not get random value");
 }
 
-function choice<T>(population: T[]): T {
+function choice<T>(population: readonly T[]): T {
   return population[randrange(0, population.length - 1)]!;
 }
 
