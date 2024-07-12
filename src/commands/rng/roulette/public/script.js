@@ -21,13 +21,16 @@
     });
     bets.length = 0;
   };
-  const stringifyBets = () =>
-    bets.map((bet) => {
-      return {
-        amount: bet.betAmount,
-        pockets: bet.pockets.map(({ value }) => value),
-      };
-    });
+  const generateBetId = () =>
+    // TODO: base64 encode
+    JSON.stringify(
+      bets.map((bet) => {
+        return {
+          amount: bet.betAmount,
+          pockets: bet.pockets.map(({ value }) => value),
+        };
+      }),
+    );
 
   /** @type {HTMLInputElement | null} */
   const betAmountInput = document.querySelector(".bet-amount");
@@ -50,14 +53,14 @@
       return;
     }
 
-    const values = stringifyBets();
+    const values = generateBetId();
     if (values.length > 4000) {
       alert("Je hebt teveel bets geplaatst :'(");
       return;
     }
 
-    navigator.clipboard.writeText(JSON.stringify(values)); // TODO: handle error
-    console.log(JSON.stringify(values));
+    navigator.clipboard.writeText(values); // TODO: handle error
+    console.log(values);
 
     clearBets();
 

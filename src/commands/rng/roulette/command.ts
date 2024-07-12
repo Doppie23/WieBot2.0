@@ -1,85 +1,178 @@
-import { SlashCommandBuilder } from "discord.js";
-import type { ChatInputCommandInteraction } from "discord.js";
-import { createEmbed, RouletteOptions, spinRoulette } from "./roulette";
+import {
+  ButtonStyle,
+  ButtonBuilder,
+  SlashCommandBuilder,
+  ActionRowBuilder,
+  EmbedBuilder,
+  ComponentType,
+  ChatInputCommandInteraction,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  InteractionResponse,
+} from "discord.js";
+import { createEmbed, spinRoulette } from "./roulette";
 import rng from "../../../helpers/RngHelper";
+import db from "../../../db/db";
+
+export type Bet = {
+  amount: number;
+  pockets: number[];
+};
 
 export const data = new SlashCommandBuilder()
   .setName("roulette")
-  .setDescription("rng certified")
-  .addIntegerOption((option) =>
-    option
-      .setName("amount")
-      .setDescription("Hoeveel punten wil je inzetten?")
-      .setRequired(true)
-      .setMinValue(1),
-  )
-  .addStringOption((option) =>
-    option.setName("type").setDescription("type").setRequired(true).addChoices(
-      {
-        name: "Even",
-        value: "even",
-      },
-      {
-        name: "Oneven",
-        value: "odd",
-      },
-      {
-        name: "Getal",
-        value: "number",
-      },
-    ),
-  )
-  .addStringOption((option) =>
-    option.setName("nummer").setDescription("Welk nummer?"),
-  );
+  .setDescription("rng certified");
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const amount = await rng.getBetAmount(interaction);
-  if (amount === undefined) return;
+  const response = await interaction.reply({
+    ephemeral: true,
+    ...createInfoMessageComponents("bet-place-button"),
+  });
 
-  const type = interaction.options.getString("type")!;
-  const number = interaction.options.getString("nummer");
+  const bets = await waitForBets(response, interaction);
+  if (!bets) return;
 
-  if (!(type === "even" || type === "odd" || type === "number")) {
-    throw new Error(`Roulette type ${type} is not valid`);
-  }
+  const totalBetAmount = bets.reduce((acc, bet) => acc + bet.amount, 0);
 
-  if (type === "number" && !number) {
-    await interaction.reply({
-      content: "Geef ook een nummer op als je op een nummer in wil zetten.",
-      ephemeral: true,
+  const user = db.users.getUser(interaction.user.id, interaction.guildId!);
+  if (user!.rngScore! < totalBetAmount) {
+    await interaction.editReply({
+      content: "Daar heb je niet genoeg punten voor, probeer het opnieuw.",
+      components: [],
+      embeds: [],
     });
     return;
   }
 
-  let options: RouletteOptions;
-  if (type === "number" && number) {
-    options = {
-      amount,
-      type: "number",
-      number,
-    };
-  } else if (type === "even") {
-    options = {
-      amount,
-      type: "even",
-    };
-  } else {
-    options = {
-      amount,
-      type: "odd",
-    };
-  }
+  const outcome = spinRoulette(bets);
 
-  const outcome = spinRoulette(options);
+  rng.updateScore(interaction.user.id, interaction.guildId!, outcome.winnings);
 
-  rng.updateScore(
-    interaction.user.id,
-    interaction.guildId!,
-    outcome.success ? outcome.winnings : -options.amount,
-  );
-
-  await interaction.reply({
-    embeds: [createEmbed(options, outcome, interaction.user.displayName)],
+  await interaction.deleteReply();
+  await interaction.channel!.send({
+    embeds: [
+      createEmbed(totalBetAmount, outcome, interaction.user.displayName),
+    ],
   });
+}
+
+async function waitForBets(
+  response: InteractionResponse<boolean>,
+  interaction: ChatInputCommandInteraction,
+): Promise<Bet[] | undefined> {
+  try {
+    const confirmation = await response.awaitMessageComponent({
+      componentType: ComponentType.Button,
+      time: 360_000,
+      filter: (i) => i.user.id === interaction.user.id,
+    });
+
+    const modal = createModal("bet-id");
+
+    await confirmation.showModal(modal);
+
+    const modalResponse = await confirmation.awaitModalSubmit({
+      time: 360_000,
+      filter: (i) => i.user.id === interaction.user.id,
+    });
+
+    const betId = modalResponse.fields.getTextInputValue("bet-id");
+    await modalResponse.deferUpdate();
+
+    const bets = getBetFromId(betId);
+    if (!bets) {
+      await interaction.editReply({
+        content: "Je Bet-ID is ongeldig, probeer het opnieuw.",
+        components: [],
+        embeds: [],
+      });
+      return;
+    }
+
+    return bets;
+  } catch (error) {
+    if ((error as { code?: string }).code === "InteractionCollectorError") {
+      await interaction.editReply({
+        content: "Je wachtte te lang met het invullen, probeer het opnieuw.",
+        components: [],
+        embeds: [],
+      });
+      return undefined;
+    }
+
+    // unknow error
+    throw error;
+  }
+}
+
+function getBetFromId(betId: string): Bet[] | undefined {
+  try {
+    const json = JSON.parse(betId) as unknown;
+
+    if (
+      json instanceof Array &&
+      json.every(
+        (bet) =>
+          bet instanceof Object &&
+          "amount" in bet &&
+          "pockets" in bet &&
+          typeof (bet as Bet).amount === "number" &&
+          Array.isArray((bet as Bet).pockets) &&
+          (bet as Bet).pockets.every((pocket) => typeof pocket === "number"),
+      )
+    ) {
+      return json as Bet[];
+    }
+    throw new SyntaxError(`Invalid bet id ${betId}`);
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+function createModal(inputfieldId: string): ModalBuilder {
+  return new ModalBuilder()
+    .setCustomId("bet-place-modal")
+    .setTitle("Geef je Bet-ID op")
+    .setComponents(
+      new ActionRowBuilder<TextInputBuilder>().addComponents(
+        new TextInputBuilder()
+          .setCustomId(inputfieldId)
+          .setLabel("Bet-ID")
+          .setStyle(TextInputStyle.Paragraph)
+          .setRequired(true),
+      ),
+    );
+}
+
+function createInfoMessageComponents(buttonId: string) {
+  return {
+    embeds: [
+      new EmbedBuilder()
+        .setTitle("Roulette")
+        .setColor("Red")
+        .setDescription(
+          "Gebruik de link hieronder om je bet te plaatsen. Als je klaar bent kan je op 'Plaats bet!' klikken en je Bet-ID opgeven door deze in te vullen.",
+        ),
+    ],
+    components: [
+      new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+          .setLabel("Link")
+          .setStyle(ButtonStyle.Link)
+          .setURL(
+            "http://127.0.0.1:5500/src/commands/rng/roulette/public/index.html",
+          ),
+      ),
+      new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+          .setLabel("Plaats bet!")
+          .setCustomId(buttonId)
+          .setStyle(ButtonStyle.Primary),
+      ),
+    ],
+  };
 }

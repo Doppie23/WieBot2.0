@@ -1,68 +1,57 @@
 import { EmbedBuilder } from "discord.js";
 import random from "../../../utils/random";
+import { Bet } from "./command";
 
-// prettier-ignore
-const outcomes = ["0", "00", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36"]
-// prettier-ignore
-const odds = [1, 1, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35]
-
-export type RouletteOptions =
-  | {
-      amount: number;
-      type: "even" | "odd";
-    }
-  | {
-      amount: number;
-      type: "number";
-      number: string;
-    };
-
-export type RouletteOutcome = {
+type RouletteOutcome = {
   success: boolean;
   winnings: number;
-  outcome: string;
+  outcome: number;
 };
 
-export function spinRoulette(options: RouletteOptions): RouletteOutcome {
-  const outcome = random.choices(outcomes, odds);
+const outcomes = [
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+  22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+];
 
-  switch (options.type) {
-    case "number":
-      if (options.number === outcome) {
-        const winnings = options.amount * 35;
-        return { success: true, winnings: winnings, outcome: outcome };
+// https://nl.wikipedia.org/wiki/Roulette_(spel)#Wijze_van_inzetten
+const amountOfPocketsToWinnings = new Map([
+  [1, 35],
+  [2, 17],
+  [4, 8],
+  [12, 2],
+  [12, 2],
+  [18, 1],
+]);
+
+export function spinRoulette(bets: Bet[]): RouletteOutcome {
+  const outcome = random.choice(outcomes);
+
+  let winnings = 0;
+  for (const bet of bets) {
+    if (bet.pockets.includes(outcome)) {
+      const factor = amountOfPocketsToWinnings.get(bet.pockets.length);
+      if (factor === undefined) {
+        throw new Error(`Could not find factor for ${bet.pockets.join(",")}`);
       }
-      break;
-    case "even":
-      if (parseInt(outcome) % 2 === 0) {
-        const winnings = options.amount;
-        return { success: true, winnings: winnings, outcome: outcome };
-      }
-      break;
-    case "odd":
-      if (parseInt(outcome) % 2 !== 0) {
-        const winnings = options.amount;
-        return { success: true, winnings: winnings, outcome: outcome };
-      }
-      break;
+
+      winnings += bet.amount * factor;
+    } else {
+      winnings -= bet.amount;
+    }
   }
 
-  return { success: false, winnings: 0, outcome: outcome };
+  return { success: winnings > 0, winnings: winnings, outcome: outcome };
 }
 
 export function createEmbed(
-  options: RouletteOptions,
+  totalBetAmount: number,
   outcome: RouletteOutcome,
   name: string,
 ): EmbedBuilder {
   return new EmbedBuilder()
     .setTitle("Roulette")
     .setColor(outcome.success ? "Green" : "Red")
-    .setDescription(
-      `${name} heeft ${options.amount} punten ingezet op ${
-        options.type === "number" ? "nummer" + options.number : options.type
-      }`,
-    )
+    .setDescription(`${name} heeft ${totalBetAmount} punten ingezet.`)
     .addFields({
       name: `🎲 De uitkomst was ${outcome.outcome}`,
       value: `Je hebt ${outcome.winnings} punten gewonnen.`,
