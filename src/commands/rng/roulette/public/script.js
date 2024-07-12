@@ -5,18 +5,110 @@
  * @property {HTMLButtonElement} element
  * @property {number} value
  */
+/**
+ * @typedef {Object} Bet
+ * @property {HTMLElement} chipElement
+ * @property {number} betAmount
+ * @property {Pocket[]} pockets
+ */
 
 (() => {
+  /** @type {Bet[]} */
+  const bets = [];
+  const clearBets = () => {
+    bets.forEach((bet) => {
+      bet.chipElement.remove();
+    });
+    bets.length = 0;
+  };
+  const stringifyBets = () =>
+    bets.map((bet) => {
+      return {
+        amount: bet.betAmount,
+        pockets: bet.pockets.map(({ value }) => value),
+      };
+    });
+
+  /** @type {HTMLInputElement | null} */
+  const betAmountInput = document.querySelector(".bet-amount");
+  if (!betAmountInput) throw new Error("Could not find .bet-amount");
+
+  /** @type {HTMLButtonElement | null} */
+  const clearButton = document.querySelector(".clear-button");
+  if (!clearButton) throw new Error("Could not find .clear-button");
+  /** @type {HTMLButtonElement | null} */
+  const copyButton = document.querySelector(".copy-button");
+  if (!copyButton) throw new Error("Could not find .copy-button");
+
   const pockets = getPockets();
 
-  const onBetPlaced = (/** @type {Pocket[]} */ pockets) => {
-    pockets.forEach(({ value }) => {
-      console.log(value);
+  clearButton.addEventListener("click", clearBets);
+
+  copyButton.addEventListener("click", () => {
+    if (bets.length === 0) {
+      alert("Plaats eerst een bet!");
+      return;
+    }
+
+    const values = stringifyBets();
+    if (values.length > 4000) {
+      alert("Je hebt teveel bets geplaatst :'(");
+      return;
+    }
+
+    navigator.clipboard.writeText(JSON.stringify(values));
+    console.log(JSON.stringify(values));
+
+    clearBets();
+
+    // alert("Je bets staan nu in je klembord!");
+    const text = copyButton.innerText;
+    copyButton.innerText = "Gekopieërd!";
+    setTimeout(() => {
+      copyButton.innerText = text;
+    }, 1000);
+  });
+
+  const onBetPlaced = (
+    /** @type {Pocket[]} */ pockets,
+    /** @type {Event} */ event,
+  ) => {
+    const betAmount = parseInt(betAmountInput.value);
+    if (isNaN(betAmount)) {
+      betAmountInput.classList.add("error");
+      setTimeout(() => {
+        betAmountInput.classList.remove("error");
+      }, 500);
+      return;
+    }
+
+    if (!event.target || !(event.target instanceof Element)) {
+      // throw new Error("Could not find element to append chip to");
+      console.error("Could not find element to append chip to", event);
+      return;
+    }
+
+    const chip = createChip();
+    event.target.appendChild(chip);
+
+    bets.push({
+      betAmount,
+      pockets,
+      chipElement: chip,
     });
   };
 
   addAllEventListeners(pockets, onBetPlaced);
 })();
+
+function createChip() {
+  const chip = document.createElement("div");
+  chip.classList.add("chip");
+  chip.style.backgroundColor = `hsl(${Math.random() * 360}, 80%, 50%)`;
+  chip.style.left = `calc(50% + ${Math.floor(Math.random() * 8 - 4)}px)`;
+  chip.style.top = `calc(50% + ${Math.floor(Math.random() * 8 - 4)}px)`;
+  return chip;
+}
 
 function getPockets() {
   const numberSelectors = [
@@ -91,13 +183,20 @@ function getPockets() {
 
 /**
  * @param {Pocket[]} pockets
- * @param {(pockets: Pocket[]) => void} onBetPlaced
+ * @param {(pockets: Pocket[], event: Event) => void} onBetPlaced
  */
 function addAllEventListeners(pockets, onBetPlaced) {
   pockets.forEach((pocket) => {
-    pocket.element.addEventListener("click", () => {
-      onBetPlaced([pocket]);
+    pocket.element.addEventListener("click", (e) => {
+      onBetPlaced([pocket], e);
     });
+  });
+
+  /** @type {HTMLButtonElement | null} */
+  const zero = document.querySelector(".number0");
+  if (!zero) throw new Error("Could not find .number0");
+  zero.addEventListener("click", (e) => {
+    onBetPlaced([{ element: zero, value: 0 }], e);
   });
 
   ///////////////////////////////////////////////////////////////////////////////////////////
@@ -250,7 +349,7 @@ function addAllEventListeners(pockets, onBetPlaced) {
     }
 
     if (pocket.value === 36 || pocket.value === 35 || pocket.value === 34) {
-      // reached edge
+      // reached edge, skip right and bottom right divs
       row++;
       col = 0;
       continue;
@@ -324,7 +423,7 @@ function getPocketsWhere(pockets, predicate) {
 /**
  * @param {Element} button element that needs to be hovered
  * @param {Pocket[]} pockets elements to highlight
- * @param {((pockets: Pocket[]) => void)=} onClick
+ * @param {((pockets: Pocket[], event: Event) => void)=} onClick
  */
 function addEventListenersForMultiSelect(button, pockets, onClick) {
   button.addEventListener("pointerenter", () => {
@@ -337,7 +436,7 @@ function addEventListenersForMultiSelect(button, pockets, onClick) {
       element.classList.remove("hovered");
     });
   });
-  button.addEventListener("click", () => {
-    onClick?.(pockets);
+  button.addEventListener("click", (e) => {
+    onClick?.(pockets, e);
   });
 }

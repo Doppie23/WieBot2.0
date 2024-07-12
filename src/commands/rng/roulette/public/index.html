@@ -15,6 +15,27 @@
   </head>
   <body>
     <div class="container">
+      <div>
+        <h1 class="title">Roulette</h1>
+        <p class="instructions">
+          Plaats hier al je bets. Elke nieuwe chip die je plaatst heeft de
+          waarde die je hieronder hebt ingevuld. Als je klaar bent kan je op
+          "Klaar!" klikken. Je bets worden opgeslagen in je klembord zodat je ze
+          in Discord kan plakken.
+        </p>
+      </div>
+
+      <div class="inputs__top">
+        <input
+          type="number"
+          class="bet-amount"
+          placeholder="Chip waarde"
+          title="De waarde van één bet die je plaatst."
+          min="1"
+        />
+        <button class="clear-button">Verwijder alle chips</button>
+      </div>
+
       <div class="table">
         <button class="outside range1936">19 to 36</button>
         <button class="outside parityOdd">Odd</button>
@@ -73,6 +94,8 @@
 
         <button class="pocket-zero number0">0</button>
       </div>
+
+      <button class="copy-button">Klaar!</button>
     </div>
   </body>
 </html>
