@@ -1,0 +1,266 @@
+:root {
+  --red: #fe2247;
+  --red-hover: rgb(254, 110, 134);
+  --black: #2f4553;
+  --black-hover: rgb(75, 110, 132);
+  --green: #419e3f;
+  --green-hover: rgb(105, 194, 103);
+  --bg: #1a2c38;
+  --bg-dark: #0f212e;
+
+  --square-size: 3rem;
+  --square-gap: 0.25rem;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
+  color: rgb(218, 218, 218);
+
+  height: 100svh;
+  background-color: var(--bg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+button {
+  all: unset;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 0.5rem;
+
+  transition: scale 0.1s ease-in-out;
+}
+
+button:hover {
+  cursor: pointer;
+}
+button:active {
+  scale: 0.95;
+}
+
+.container {
+  padding: 2rem 3rem;
+  background-color: var(--bg-dark);
+  border-radius: 1rem;
+}
+
+/* @media (min-width: 800px) {
+  .container {
+    rotate: unset;
+  }
+} */
+
+.table {
+  position: relative;
+  font-weight: 500;
+
+  display: grid;
+  grid-template-rows: repeat(5, var(--square-size));
+  grid-template-columns: repeat(14, var(--square-size));
+  gap: var(--square-gap);
+  grid-template-areas:
+    "number0 number3 number6 number9 number12 number15 number18 number21 number24 number27 number30 number33 number36 row1"
+    "number0 number2 number5 number8 number11 number14 number17 number20 number23 number26 number29 number32 number35 row2"
+    "number0 number1 number4 number7 number10 number13 number16 number19 number22 number25 number28 number31 number34 row3"
+    ". range0112 range0112 range0112 range0112 range1324 range1324 range1324 range1324 range2536 range2536 range2536 range2536 ."
+    ". range0118 range0118 parityEven parityEven colorRed colorRed colorBlack colorBlack parityOdd parityOdd range1936 range1936 .";
+}
+
+.table > .outside {
+  border: var(--black) solid 3px;
+  box-sizing: border-box;
+}
+.table > .pocket-black {
+  background-color: var(--black);
+}
+.table > .pocket-red {
+  background-color: var(--red);
+}
+.table > .pocket-zero {
+  background-color: var(--green);
+}
+
+.table > .outside:hover {
+  border-color: var(--black-hover);
+  background-color: var(--black-hover);
+}
+.table > .pocket-black:hover,
+.table > .pocket-black.hovered {
+  background-color: var(--black-hover);
+}
+.table > .pocket-red:hover,
+.table > .pocket-red.hovered {
+  background-color: var(--red-hover);
+}
+.table > .pocket-zero:hover,
+.table > .pocket-zero.hovered {
+  background-color: var(--green-hover);
+}
+
+.number0 {
+  grid-area: number0;
+}
+.number3 {
+  grid-area: number3;
+}
+.number6 {
+  grid-area: number6;
+}
+.number9 {
+  grid-area: number9;
+}
+.number12 {
+  grid-area: number12;
+}
+.number15 {
+  grid-area: number15;
+}
+.number18 {
+  grid-area: number18;
+}
+.number21 {
+  grid-area: number21;
+}
+.number24 {
+  grid-area: number24;
+}
+.number27 {
+  grid-area: number27;
+}
+.number30 {
+  grid-area: number30;
+}
+.number33 {
+  grid-area: number33;
+}
+.number36 {
+  grid-area: number36;
+}
+.row1 {
+  grid-area: row1;
+}
+.number2 {
+  grid-area: number2;
+}
+.number5 {
+  grid-area: number5;
+}
+.number8 {
+  grid-area: number8;
+}
+.number11 {
+  grid-area: number11;
+}
+.number14 {
+  grid-area: number14;
+}
+.number17 {
+  grid-area: number17;
+}
+.number20 {
+  grid-area: number20;
+}
+.number23 {
+  grid-area: number23;
+}
+.number26 {
+  grid-area: number26;
+}
+.number29 {
+  grid-area: number29;
+}
+.number32 {
+  grid-area: number32;
+}
+.number35 {
+  grid-area: number35;
+}
+.row2 {
+  grid-area: row2;
+}
+.number1 {
+  grid-area: number1;
+}
+.number4 {
+  grid-area: number4;
+}
+.number7 {
+  grid-area: number7;
+}
+.number10 {
+  grid-area: number10;
+}
+.number13 {
+  grid-area: number13;
+}
+.number16 {
+  grid-area: number16;
+}
+.number19 {
+  grid-area: number19;
+}
+.number22 {
+  grid-area: number22;
+}
+.number25 {
+  grid-area: number25;
+}
+.number28 {
+  grid-area: number28;
+}
+.number31 {
+  grid-area: number31;
+}
+.number34 {
+  grid-area: number34;
+}
+.row3 {
+  grid-area: row3;
+}
+.range0112 {
+  grid-area: range0112;
+}
+.range1324 {
+  grid-area: range1324;
+}
+.range2536 {
+  grid-area: range2536;
+}
+.range0118 {
+  grid-area: range0118;
+}
+.parityEven {
+  grid-area: parityEven;
+}
+.colorRed {
+  grid-area: colorRed;
+}
+.colorBlack {
+  grid-area: colorBlack;
+}
+.parityOdd {
+  grid-area: parityOdd;
+}
+.range1936 {
+  grid-area: range1936;
+}
+
+.between36 {
+  position: absolute;
+  left: calc(
+    (var(--square-size) + var(--square-gap)) * 2 - var(--square-gap) / 2
+  );
+  top: calc(var(--square-size) / 2);
+
+  height: 1rem;
+  aspect-ratio: 1/1;
+  transform: translate(-50%, -50%);
+}
