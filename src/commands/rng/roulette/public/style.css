@@ -24,8 +24,6 @@ body {
   color: rgb(218, 218, 218);
 
   background-color: var(--bg);
-
-  padding-top: 10rem;
 }
 
 input {
@@ -52,6 +50,7 @@ button {
   justify-content: center;
   align-items: center;
   border-radius: 0.5rem;
+  text-align: center;
 
   transition: scale 0.1s ease-in-out;
 }
@@ -115,7 +114,7 @@ button:active {
 }
 
 .container {
-  margin: 0 auto;
+  margin: 10rem auto;
 
   width: fit-content;
   padding: 2rem 3rem;
@@ -130,12 +129,32 @@ button:active {
 .instructions {
   max-width: 680px;
 }
-/* 
+
+.table-wrapper {
+  position: relative;
+}
+
 @media (max-width: 800px) {
   .table {
-    rotate: 90deg;
+    position: absolute !important;
+    left: 50%;
+    top: 0;
+    transform: translate(-50%, 100%) rotate(-90deg);
   }
-} */
+  .counter-rotate {
+    transform: rotate(90deg);
+  }
+
+  .container {
+    border-radius: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  .copy-button {
+    margin-top: 48rem;
+  }
+}
 
 .table {
   width: fit-content;

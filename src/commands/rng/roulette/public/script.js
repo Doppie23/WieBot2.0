@@ -56,7 +56,7 @@
       return;
     }
 
-    navigator.clipboard.writeText(JSON.stringify(values));
+    navigator.clipboard.writeText(JSON.stringify(values)); // TODO: handle error
     console.log(JSON.stringify(values));
 
     clearBets();
@@ -66,7 +66,7 @@
     copyButton.innerText = "Gekopieërd!";
     setTimeout(() => {
       copyButton.innerText = text;
-    }, 1000);
+    }, 2000);
   });
 
   const onBetPlaced = (
@@ -438,5 +438,15 @@ function addEventListenersForMultiSelect(button, pockets, onClick) {
   });
   button.addEventListener("click", (e) => {
     onClick?.(pockets, e);
+  });
+  button.addEventListener("mousedown", () => {
+    pockets.forEach(({ element }) => {
+      element.style.scale = "0.95";
+    });
+  });
+  button.addEventListener("mouseup", () => {
+    pockets.forEach(({ element }) => {
+      element.style.scale = "1";
+    });
   });
 }
