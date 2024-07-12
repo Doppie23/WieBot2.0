@@ -6,48 +6,19 @@
  * @property {number} value
  */
 
-/**
- *
- * @param {Pocket[]} pockets
- * @param {(pocket: Pocket) => boolean} predicate
- * @returns {Pocket[]}
- */
-function getPocketsWhere(pockets, predicate) {
-  return pockets
-    .map((pocket) => {
-      if (!predicate(pocket)) {
-        return null;
-      }
-      return pocket;
-    })
-    .filter((number) => number !== null);
-}
-
-/**
- * @param {HTMLButtonElement} button element that needs to be hovered
- * @param {Pocket[]} pockets elements to highlight
- */
-function addEventListenersToOutsideButton(button, pockets) {
-  button.addEventListener("pointerenter", () => {
-    pockets.forEach(({ element }) => {
-      element.classList.add("hovered");
-    });
-  });
-  button.addEventListener("pointerleave", () => {
-    pockets.forEach(({ element }) => {
-      element.classList.remove("hovered");
-    });
-  });
-  button.addEventListener("click", () => {
-    const numbers = [];
-    pockets.forEach(({ value }) => {
-      numbers.push(value);
-    });
-    console.log(numbers);
-  });
-}
-
 (() => {
+  const pockets = getPockets();
+
+  const onBetPlaced = (/** @type {Pocket[]} */ pockets) => {
+    pockets.forEach(({ value }) => {
+      console.log(value);
+    });
+  };
+
+  addAllEventListeners(pockets, onBetPlaced);
+})();
+
+function getPockets() {
   const numberSelectors = [
     ".number3",
     ".number6",
@@ -115,6 +86,24 @@ function addEventListenersToOutsideButton(button, pockets) {
     })
     .filter((obj) => obj !== null);
 
+  return pockets;
+}
+
+/**
+ * @param {Pocket[]} pockets
+ * @param {(pockets: Pocket[]) => void} onBetPlaced
+ */
+function addAllEventListeners(pockets, onBetPlaced) {
+  pockets.forEach((pocket) => {
+    pocket.element.addEventListener("click", () => {
+      onBetPlaced([pocket]);
+    });
+  });
+
+  ///////////////////////////////////////////////////////////////////////////////////////////
+  // All outside buttons
+  ///////////////////////////////////////////////////////////////////////////////////////////
+
   /** @type {HTMLButtonElement | null} */
   const range0112Button = document.querySelector(".range0112");
   if (!range0112Button) throw new Error("Could not find .range0112");
@@ -152,68 +141,203 @@ function addEventListenersToOutsideButton(button, pockets) {
   const row3Button = document.querySelector(".row3");
   if (!row3Button) throw new Error("Could not find .row3");
 
-  addEventListenersToOutsideButton(
+  addEventListenersForMultiSelect(
     range0112Button,
     getPocketsWhere(pockets, ({ value }) => value > 0 && value < 13),
+    onBetPlaced,
   );
-  addEventListenersToOutsideButton(
+  addEventListenersForMultiSelect(
     range1324Button,
     getPocketsWhere(pockets, ({ value }) => value > 12 && value < 25),
+    onBetPlaced,
   );
-  addEventListenersToOutsideButton(
+  addEventListenersForMultiSelect(
     range2536Button,
     getPocketsWhere(pockets, ({ value }) => value > 24 && value < 37),
+    onBetPlaced,
   );
-  addEventListenersToOutsideButton(
+  addEventListenersForMultiSelect(
     range0118Button,
     getPocketsWhere(pockets, ({ value }) => value > 0 && value < 19),
+    onBetPlaced,
   );
-  addEventListenersToOutsideButton(
+  addEventListenersForMultiSelect(
     parityEvenButton,
     getPocketsWhere(pockets, ({ value }) => value % 2 === 0),
+    onBetPlaced,
   );
-  addEventListenersToOutsideButton(
+  addEventListenersForMultiSelect(
     colorRedButton,
     getPocketsWhere(pockets, ({ element: el }) =>
       el.classList.contains("pocket-red"),
     ),
+    onBetPlaced,
   );
-  addEventListenersToOutsideButton(
+  addEventListenersForMultiSelect(
     colorBlackButton,
     getPocketsWhere(pockets, ({ element: el }) =>
       el.classList.contains("pocket-black"),
     ),
+    onBetPlaced,
   );
-  addEventListenersToOutsideButton(
+  addEventListenersForMultiSelect(
     parityOddButton,
     getPocketsWhere(pockets, ({ value }) => value % 2 !== 0),
+    onBetPlaced,
   );
-  addEventListenersToOutsideButton(
+  addEventListenersForMultiSelect(
     range1936Button,
     getPocketsWhere(pockets, ({ value }) => value > 18 && value < 37),
+    onBetPlaced,
   );
 
   const row1 = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36];
   const row2 = [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35];
   const row3 = [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34];
 
-  addEventListenersToOutsideButton(
+  addEventListenersForMultiSelect(
     row1Button,
     getPocketsWhere(pockets, ({ value }) => row1.includes(value)),
+    onBetPlaced,
   );
-  addEventListenersToOutsideButton(
+  addEventListenersForMultiSelect(
     row2Button,
     getPocketsWhere(pockets, ({ value }) => row2.includes(value)),
+    onBetPlaced,
   );
-  addEventListenersToOutsideButton(
+  addEventListenersForMultiSelect(
     row3Button,
     getPocketsWhere(pockets, ({ value }) => row3.includes(value)),
+    onBetPlaced,
   );
 
-  // const between36 = document.querySelector(".between36");
-  // if (!between36) throw new Error("Could not find .between36");
-  // addEventListenersToOutsideButton(
-  //   between36,
-  //   getPocketsWhere(pockets, ({ value }) => value === 3 || value === 6),
-  // );
-})();
+  ///////////////////////////////////////////////////////////////////////////////////////////
+  // Between pockets
+  ///////////////////////////////////////////////////////////////////////////////////////////
+
+  const table = document.querySelector(".table");
+  if (!table) throw new Error("Could not find .table");
+
+  let row = 0;
+  let col = 0;
+  for (let i = 0; i < pockets.length; i++) {
+    const pocket = pockets[i];
+    const neighbourRight = pockets[i + 1];
+    const neighbourBottom = pockets[i + row1.length];
+    const neighbourBottomRight = pockets[i + row1.length + 1];
+
+    if (neighbourBottom) {
+      const el = document.createElement("div");
+      el.classList.add("between-pocket");
+      el.style.left = `calc(var(--square-size) * ${
+        col + 1
+      } + var(--square-gap) * ${col + 1} + var(--square-size) / 2)`;
+      el.style.top = `calc(var(--square-size) * ${
+        row + 1
+      } + var(--square-gap) / 2 + var(--square-gap) * ${row})`;
+
+      addEventListenersForMultiSelect(
+        el,
+        getPocketsWhere(
+          pockets,
+          ({ value }) =>
+            value === pocket.value || value === neighbourBottom.value,
+        ),
+        onBetPlaced,
+      );
+
+      table.appendChild(el);
+    }
+
+    if (pocket.value === 36 || pocket.value === 35 || pocket.value === 34) {
+      // reached edge
+      row++;
+      col = 0;
+      continue;
+    }
+
+    if (neighbourBottomRight) {
+      const el = document.createElement("div");
+      el.classList.add("between-pocket");
+      el.style.left = `calc((var(--square-size) + var(--square-gap)) * ${
+        2 + col
+      } - var(--square-gap) / 2)`;
+      el.style.top = `calc(var(--square-size) * ${
+        row + 1
+      } + var(--square-gap) / 2 + var(--square-gap) * ${row})`;
+
+      addEventListenersForMultiSelect(
+        el,
+        getPocketsWhere(
+          pockets,
+          ({ value }) =>
+            value === pocket.value ||
+            value === neighbourRight.value ||
+            value === neighbourBottom.value ||
+            value === neighbourBottomRight.value,
+        ),
+        onBetPlaced,
+      );
+
+      table.appendChild(el);
+    }
+
+    const el = document.createElement("div");
+    el.classList.add("between-pocket");
+    el.style.left = `calc((var(--square-size) + var(--square-gap)) * ${
+      2 + col
+    } - var(--square-gap) / 2)`;
+    el.style.top = `calc(var(--square-size) / 2 + (var(--square-size) + var(--square-gap)) * ${row} )`;
+
+    addEventListenersForMultiSelect(
+      el,
+      getPocketsWhere(
+        pockets,
+        ({ value }) => value === pocket.value || value === neighbourRight.value,
+      ),
+      onBetPlaced,
+    );
+
+    table.appendChild(el);
+
+    col++;
+  }
+}
+
+/**
+ *
+ * @param {Pocket[]} pockets
+ * @param {(pocket: Pocket) => boolean} predicate
+ * @returns {Pocket[]}
+ */
+function getPocketsWhere(pockets, predicate) {
+  return pockets
+    .map((pocket) => {
+      if (!predicate(pocket)) {
+        return null;
+      }
+      return pocket;
+    })
+    .filter((number) => number !== null);
+}
+
+/**
+ * @param {Element} button element that needs to be hovered
+ * @param {Pocket[]} pockets elements to highlight
+ * @param {((pockets: Pocket[]) => void)=} onClick
+ */
+function addEventListenersForMultiSelect(button, pockets, onClick) {
+  button.addEventListener("pointerenter", () => {
+    pockets.forEach(({ element }) => {
+      element.classList.add("hovered");
+    });
+  });
+  button.addEventListener("pointerleave", () => {
+    pockets.forEach(({ element }) => {
+      element.classList.remove("hovered");
+    });
+  });
+  button.addEventListener("click", () => {
+    onClick?.(pockets);
+  });
+}

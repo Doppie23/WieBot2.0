@@ -105,6 +105,14 @@ button:active {
   background-color: var(--green-hover);
 }
 
+.between-pocket {
+  position: absolute;
+  height: 1rem;
+  aspect-ratio: 1/1;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
 .number0 {
   grid-area: number0;
 }
@@ -251,16 +259,4 @@ button:active {
 }
 .range1936 {
   grid-area: range1936;
-}
-
-.between36 {
-  position: absolute;
-  left: calc(
-    (var(--square-size) + var(--square-gap)) * 2 - var(--square-gap) / 2
-  );
-  top: calc(var(--square-size) / 2);
-
-  height: 1rem;
-  aspect-ratio: 1/1;
-  transform: translate(-50%, -50%);
 }
