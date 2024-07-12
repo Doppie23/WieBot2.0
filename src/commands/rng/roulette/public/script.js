@@ -6,10 +6,16 @@
  * @property {number} value
  */
 /**
+ * @typedef {Object} BetType
+ * @property {string} name
+ * @property {boolean} includePocketsInName
+ */
+/**
  * @typedef {Object} Bet
  * @property {HTMLElement} chipElement
  * @property {number} betAmount
  * @property {Pocket[]} pockets
+ * @property {string} name
  */
 
 (() => {
@@ -22,15 +28,21 @@
     bets.length = 0;
   };
   const generateBetId = () =>
-    // TODO: base64 encode
-    JSON.stringify(
-      bets.map((bet) => {
-        return {
-          amount: bet.betAmount,
-          pockets: bet.pockets.map(({ value }) => value),
-        };
-      }),
+    stringToBase64(
+      JSON.stringify(
+        bets.map((bet) => {
+          return {
+            amount: bet.betAmount,
+            pockets: bet.pockets.map(({ value }) => value),
+            name: bet.name,
+          };
+        }),
+      ),
     );
+
+  /** @type {HTMLDivElement | null} */
+  const container = document.querySelector(".container");
+  if (!container) throw new Error("Could not find .container");
 
   /** @type {HTMLInputElement | null} */
   const betAmountInput = document.querySelector(".bet-amount");
@@ -42,6 +54,9 @@
   /** @type {HTMLButtonElement | null} */
   const copyButton = document.querySelector(".copy-button");
   if (!copyButton) throw new Error("Could not find .copy-button");
+  /** @type {HTMLInputElement | null} */
+  const betIdInput = document.querySelector("#bet-id-input");
+  if (!betIdInput) throw new Error("Could not find #bet-id-input");
 
   const pockets = getPockets();
 
@@ -53,18 +68,19 @@
       return;
     }
 
-    const values = generateBetId();
-    if (values.length > 4000) {
+    const betId = generateBetId();
+    if (betId.length > 4000) {
       alert("Je hebt teveel bets geplaatst :'(");
       return;
     }
 
-    navigator.clipboard.writeText(values); // TODO: handle error
-    console.log(values);
+    const el = document.getElementById("clipboard-error");
+    if (el) {
+      container.removeChild(el);
+    }
+    betIdInput.select();
 
-    clearBets();
-
-    // alert("Je bets staan nu in je klembord!");
+    navigator.clipboard.writeText(betId);
     const text = copyButton.innerText;
     copyButton.innerText = "Gekopieërd!";
     setTimeout(() => {
@@ -75,6 +91,7 @@
   const onBetPlaced = (
     /** @type {Pocket[]} */ pockets,
     /** @type {Event} */ event,
+    /** @type {BetType} */ betType,
   ) => {
     const betAmount = parseInt(betAmountInput.value);
     if (isNaN(betAmount)) {
@@ -98,7 +115,14 @@
       betAmount,
       pockets,
       chipElement: chip,
+      name:
+        betType.name +
+        (betType.includePocketsInName
+          ? ` ${pockets.map(({ value }) => value).join(", ")}`
+          : ""),
     });
+
+    betIdInput.value = generateBetId();
   };
 
   addAllEventListeners(pockets, onBetPlaced);
@@ -186,12 +210,12 @@ function getPockets() {
 
 /**
  * @param {Pocket[]} pockets
- * @param {(pockets: Pocket[], event: Event) => void} onBetPlaced
+ * @param {(pockets: Pocket[], event: Event, betType: BetType) => void} onBetPlaced
  */
 function addAllEventListeners(pockets, onBetPlaced) {
   pockets.forEach((pocket) => {
     pocket.element.addEventListener("click", (e) => {
-      onBetPlaced([pocket], e);
+      onBetPlaced([pocket], e, { name: "Getal", includePocketsInName: true });
     });
   });
 
@@ -199,7 +223,10 @@ function addAllEventListeners(pockets, onBetPlaced) {
   const zero = document.querySelector(".number0");
   if (!zero) throw new Error("Could not find .number0");
   zero.addEventListener("click", (e) => {
-    onBetPlaced([{ element: zero, value: 0 }], e);
+    onBetPlaced([{ element: zero, value: 0 }], e, {
+      name: "Zero",
+      includePocketsInName: false,
+    });
   });
 
   ///////////////////////////////////////////////////////////////////////////////////////////
@@ -246,51 +273,52 @@ function addAllEventListeners(pockets, onBetPlaced) {
   addEventListenersForMultiSelect(
     range0112Button,
     getPocketsWhere(pockets, ({ value }) => value > 0 && value < 13),
-    onBetPlaced,
+    (p, e) => onBetPlaced(p, e, { name: "01-12", includePocketsInName: false }),
   );
   addEventListenersForMultiSelect(
     range1324Button,
     getPocketsWhere(pockets, ({ value }) => value > 12 && value < 25),
-    onBetPlaced,
+    (p, e) => onBetPlaced(p, e, { name: "13-24", includePocketsInName: false }),
   );
   addEventListenersForMultiSelect(
     range2536Button,
     getPocketsWhere(pockets, ({ value }) => value > 24 && value < 37),
-    onBetPlaced,
+    (p, e) => onBetPlaced(p, e, { name: "25-36", includePocketsInName: false }),
   );
   addEventListenersForMultiSelect(
     range0118Button,
     getPocketsWhere(pockets, ({ value }) => value > 0 && value < 19),
-    onBetPlaced,
+    (p, e) => onBetPlaced(p, e, { name: "01-18", includePocketsInName: false }),
   );
   addEventListenersForMultiSelect(
     parityEvenButton,
     getPocketsWhere(pockets, ({ value }) => value % 2 === 0),
-    onBetPlaced,
+    (p, e) => onBetPlaced(p, e, { name: "Even", includePocketsInName: false }),
   );
   addEventListenersForMultiSelect(
     colorRedButton,
     getPocketsWhere(pockets, ({ element: el }) =>
       el.classList.contains("pocket-red"),
     ),
-    onBetPlaced,
+    (p, e) => onBetPlaced(p, e, { name: "Rood", includePocketsInName: false }),
   );
   addEventListenersForMultiSelect(
     colorBlackButton,
     getPocketsWhere(pockets, ({ element: el }) =>
       el.classList.contains("pocket-black"),
     ),
-    onBetPlaced,
+    (p, e) => onBetPlaced(p, e, { name: "Zwart", includePocketsInName: false }),
   );
   addEventListenersForMultiSelect(
     parityOddButton,
     getPocketsWhere(pockets, ({ value }) => value % 2 !== 0),
-    onBetPlaced,
+    (p, e) =>
+      onBetPlaced(p, e, { name: "Oneven", includePocketsInName: false }),
   );
   addEventListenersForMultiSelect(
     range1936Button,
     getPocketsWhere(pockets, ({ value }) => value > 18 && value < 37),
-    onBetPlaced,
+    (p, e) => onBetPlaced(p, e, { name: "19-36", includePocketsInName: false }),
   );
 
   const row1 = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36];
@@ -300,17 +328,17 @@ function addAllEventListeners(pockets, onBetPlaced) {
   addEventListenersForMultiSelect(
     row1Button,
     getPocketsWhere(pockets, ({ value }) => row1.includes(value)),
-    onBetPlaced,
+    (p, e) => onBetPlaced(p, e, { name: "Rij 1", includePocketsInName: false }),
   );
   addEventListenersForMultiSelect(
     row2Button,
     getPocketsWhere(pockets, ({ value }) => row2.includes(value)),
-    onBetPlaced,
+    (p, e) => onBetPlaced(p, e, { name: "Rij 2", includePocketsInName: false }),
   );
   addEventListenersForMultiSelect(
     row3Button,
     getPocketsWhere(pockets, ({ value }) => row3.includes(value)),
-    onBetPlaced,
+    (p, e) => onBetPlaced(p, e, { name: "Rij 3", includePocketsInName: false }),
   );
 
   ///////////////////////////////////////////////////////////////////////////////////////////
@@ -345,7 +373,8 @@ function addAllEventListeners(pockets, onBetPlaced) {
           ({ value }) =>
             value === pocket.value || value === neighbourBottom.value,
         ),
-        onBetPlaced,
+        (p, e) =>
+          onBetPlaced(p, e, { name: "Randje", includePocketsInName: true }),
       );
 
       table.appendChild(el);
@@ -378,7 +407,8 @@ function addAllEventListeners(pockets, onBetPlaced) {
             value === neighbourBottom.value ||
             value === neighbourBottomRight.value,
         ),
-        onBetPlaced,
+        (p, e) =>
+          onBetPlaced(p, e, { name: "Hoek", includePocketsInName: true }),
       );
 
       table.appendChild(el);
@@ -397,7 +427,8 @@ function addAllEventListeners(pockets, onBetPlaced) {
         pockets,
         ({ value }) => value === pocket.value || value === neighbourRight.value,
       ),
-      onBetPlaced,
+      (p, e) =>
+        onBetPlaced(p, e, { name: "Randje", includePocketsInName: true }),
     );
 
     table.appendChild(el);
@@ -452,4 +483,16 @@ function addEventListenersForMultiSelect(button, pockets, onClick) {
       element.style.scale = "1";
     });
   });
+}
+
+/**
+ * @param {string} str
+ */
+function stringToBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+
+  const binString = Array.from(bytes, (byte) =>
+    String.fromCodePoint(byte),
+  ).join("");
+  return btoa(binString);
 }

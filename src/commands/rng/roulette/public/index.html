@@ -20,7 +20,7 @@
         <p class="instructions">
           Plaats hier al je bets. Elke nieuwe chip die je plaatst heeft de
           waarde die je hieronder hebt ingevuld. Als je klaar bent kan je
-          onderaan op "Klaar!" klikken. Je Bet-ID wordt opgeslagen in je
+          onderaan op "Klaar!" klikken. Je Bet-ID wordt dan opgeslagen in je
           klembord zodat je hem Discord kan plakken.
         </p>
       </div>
@@ -97,7 +97,12 @@
         </div>
       </div>
 
-      <button class="copy-button">Klaar!</button>
+      <div class="copy-container">
+        <input type="text" id="bet-id-input" readonly placeholder="Bet-ID" />
+        <button class="copy-button">Kopieër!</button>
+      </div>
     </div>
+
+    <!-- TODO: show all bets -->
   </body>
 </html>

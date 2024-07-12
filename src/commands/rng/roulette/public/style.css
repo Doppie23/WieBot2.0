@@ -79,10 +79,6 @@ button:active {
   flex: 1;
 }
 
-.copy-button {
-  margin-top: 0.25rem;
-}
-
 .clear-button {
   background-color: var(--red);
   padding: 0.75rem 0.5rem;
@@ -111,10 +107,11 @@ button:active {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 .container {
-  margin: 10rem auto;
+  margin: 10rem auto 0;
 
   width: fit-content;
   padding: 2rem 3rem;
@@ -130,8 +127,32 @@ button:active {
   max-width: 680px;
 }
 
+.clipboard-error > input {
+  margin-top: 0.5rem;
+  width: 100%;
+  color: #5c748f;
+  box-sizing: border-box;
+  border-color: var(--red);
+}
+.clipboard-error > .title {
+  margin-top: 0.25rem;
+  font-style: italic;
+  font-weight: 600;
+}
+
 .table-wrapper {
   position: relative;
+}
+
+.copy-container {
+  display: flex;
+  gap: 0.5rem;
+}
+.copy-container > input {
+  flex: 1;
+  color: var(--black);
+  font-weight: 600;
+  font-style: italic;
 }
 
 @media (max-width: 800px) {
@@ -151,7 +172,7 @@ button:active {
     overflow: hidden;
   }
 
-  .copy-button {
+  .copy-container {
     margin-top: 48rem;
   }
 }
