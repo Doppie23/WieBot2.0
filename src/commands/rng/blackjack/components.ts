@@ -54,18 +54,7 @@ export function createEmbed(blackjack: Blackjack): EmbedBuilder {
   return embed;
 }
 
-export function createRow(
-  blackjack: Blackjack,
-  hasEnoughPoints: boolean,
-): ActionRowBuilder<ButtonBuilder> {
-  const canDoubleDown =
-    blackjack.isPlayerTurn &&
-    blackjack.currentHand.canDoubleDown &&
-    hasEnoughPoints;
-
-  const canSplit =
-    blackjack.isPlayerTurn && blackjack.currentHand.canSplit && hasEnoughPoints;
-
+export function createRow(blackjack: Blackjack, hasEnoughPoints: boolean) {
   const hit = new ButtonBuilder()
     .setCustomId("hit")
     .setLabel("Hit")
@@ -76,25 +65,39 @@ export function createRow(
     .setLabel("Stand")
     .setStyle(ButtonStyle.Secondary);
 
-  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(hit, stand);
+  const doubleDown = new ButtonBuilder()
+    .setCustomId("doubleDown")
+    .setLabel("Double Down")
+    .setStyle(ButtonStyle.Danger);
 
-  if (canDoubleDown) {
-    row.addComponents(
-      new ButtonBuilder()
-        .setCustomId("doubleDown")
-        .setLabel("Double Down")
-        .setStyle(ButtonStyle.Danger),
-    );
-  }
+  const split = new ButtonBuilder()
+    .setCustomId("split")
+    .setLabel("Split")
+    .setStyle(ButtonStyle.Danger);
 
-  if (canSplit) {
-    row.addComponents(
-      new ButtonBuilder()
-        .setCustomId("split")
-        .setLabel("Split")
-        .setStyle(ButtonStyle.Danger),
-    );
-  }
+  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    hit,
+    stand,
+    doubleDown,
+    split,
+  );
 
-  return row;
+  const updateButtons = (hasEnoughPoints: boolean) => {
+    const canDoubleDown =
+      blackjack.isPlayerTurn &&
+      blackjack.currentHand.canDoubleDown &&
+      hasEnoughPoints;
+
+    const canSplit =
+      blackjack.isPlayerTurn &&
+      blackjack.currentHand.canSplit &&
+      hasEnoughPoints;
+
+    split.setDisabled(!canSplit);
+    doubleDown.setDisabled(!canDoubleDown);
+  };
+
+  updateButtons(hasEnoughPoints);
+
+  return { row, updateButtons };
 }

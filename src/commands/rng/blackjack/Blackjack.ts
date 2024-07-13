@@ -142,6 +142,13 @@ export class Blackjack {
       if (this.currentHand.hasBlackjack) {
         this.nextHand();
       }
+    } else {
+      // dealer turn
+      if (this.playerHands.every((hand) => hand.value > 21)) {
+        // all hands bust, no need for the dealer to do anything
+        this.setGameOver();
+        return;
+      }
     }
   }
 

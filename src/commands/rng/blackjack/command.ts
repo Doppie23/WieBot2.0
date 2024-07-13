@@ -30,7 +30,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     const blackjack = new Blackjack(interaction.user.displayName, amount);
 
-    let row = createRow(blackjack, canBetAmount(amount));
+    const { row, updateButtons } = createRow(blackjack, canBetAmount(amount));
 
     const response = await interaction.reply({
       embeds: [createEmbed(blackjack)],
@@ -79,7 +79,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             break;
         }
 
-        row = createRow(blackjack, canBetAmount(amount)); // update extra buttons, like double down and split
+        updateButtons(canBetAmount(amount));
 
         await confirmation.deferUpdate();
       } else {
