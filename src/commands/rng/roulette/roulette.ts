@@ -76,8 +76,8 @@ export function createEmbed(
         name: `🎲 De uitkomst was ${outcome.outcome}`,
         value:
           (outcome.success
-            ? `Je hebt ${outcome.winnings} punten gewonnen.`
-            : `Je bent ${-outcome.winnings} punten verloren.`) +
+            ? `${name} heeft ${outcome.winnings} punten gewonnen.`
+            : `${name} is ${-outcome.winnings} punten verloren.`) +
           "\n\n**Alle bets:**",
       },
       ...outcome.results.map((bet) => ({
