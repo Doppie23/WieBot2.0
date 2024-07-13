@@ -1,18 +1,11 @@
 import {
-  ButtonStyle,
   ButtonBuilder,
   SlashCommandBuilder,
   ActionRowBuilder,
   EmbedBuilder,
   ChatInputCommandInteraction,
 } from "discord.js";
-import { rouletteIdSiteURL } from "../../../../config.json";
-
-if (!rouletteIdSiteURL || typeof rouletteIdSiteURL !== "string") {
-  throw new Error(
-    "rouletteIdSiteURL is not correct in config.json, it should be a string.",
-  );
-}
+import { createRouletteLinkButton } from "../roulette/command";
 
 export const data = new SlashCommandBuilder()
   .setName("roulette-help")
@@ -31,15 +24,12 @@ function createInfoMessageComponents() {
         .setTitle("Roulette help")
         .setColor("Red")
         .setDescription(
-          "Om een bet in roulette te plaatsen moet je een bet-ID maken met behulp van de link hieronder. Als je klaar bent kan je bij `/roulette` je ID meegeven door deze in te vullen.",
+          "Je kan in roulette kiezen om meerdere bets tegelijk te plaatsen. Dit doe je met een bet-ID, die je maakt met behulp van de link hieronder. Daarnaast kan je bij het gebruik van /roulette ook kiezen uit standaard opties zoals 1-12, even, oneven, enzovoort. Als je klaar bent, kan je bij /roulette je bet-ID of je keuze uit de standaard opties meegeven. Als je voor een standaard optie kiest moet je ook een aantal punten opgeven. Als je gebruik maakt van een bet-ID hoef je alleen maar je bet-ID op te geven, niks anders.",
         ),
     ],
     components: [
       new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder()
-          .setLabel("Link")
-          .setStyle(ButtonStyle.Link)
-          .setURL(rouletteIdSiteURL as string),
+        createRouletteLinkButton(),
       ),
     ],
   };

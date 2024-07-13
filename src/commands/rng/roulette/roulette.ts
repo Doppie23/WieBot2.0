@@ -65,9 +65,9 @@ export function createEmbed(
   totalBetAmount: number,
   outcome: RouletteOutcome,
   name: string,
-  betId: string,
+  betId?: string,
 ): EmbedBuilder {
-  return new EmbedBuilder()
+  const embed = new EmbedBuilder()
     .setTitle("Roulette")
     .setColor(outcome.success ? "Green" : "Red")
     .setDescription(`${name} heeft ${totalBetAmount} punten ingezet.`)
@@ -85,6 +85,11 @@ export function createEmbed(
         value: `winst: ${bet.winnings}`,
         inline: true,
       })),
-    )
-    .setFooter({ text: `Bet-ID: ${betId}` });
+    );
+
+  if (betId) {
+    embed.setFooter({ text: `Bet-ID: ${betId}` });
+  }
+
+  return embed;
 }
