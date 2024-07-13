@@ -21,24 +21,6 @@
 (() => {
   /** @type {Bet[]} */
   const bets = [];
-  const clearBets = () => {
-    bets.forEach((bet) => {
-      bet.chipElement.remove();
-    });
-    bets.length = 0;
-  };
-  const generateBetId = () =>
-    stringToBase64(
-      JSON.stringify(
-        bets.map((bet) => {
-          return {
-            amount: bet.betAmount,
-            pockets: bet.pockets.map(({ value }) => value),
-            name: bet.name,
-          };
-        }),
-      ),
-    );
 
   /** @type {HTMLDivElement | null} */
   const container = document.querySelector(".container");
@@ -57,6 +39,40 @@
   /** @type {HTMLInputElement | null} */
   const betIdInput = document.querySelector("#bet-id-input");
   if (!betIdInput) throw new Error("Could not find #bet-id-input");
+  /** @type {HTMLDivElement | null} */
+  const betsContainer = document.querySelector(".bets-container");
+  if (!betsContainer) throw new Error("Could not find .bets-container");
+  betsContainer.style.display = "none";
+
+  const clearBets = () => {
+    bets.forEach((bet) => {
+      removeChip(bet.chipElement);
+    });
+    bets.length = 0;
+  };
+  const generateBetId = () =>
+    stringToBase64(
+      JSON.stringify(
+        bets.map((bet) => {
+          return {
+            amount: bet.betAmount,
+            pockets: bet.pockets.map(({ value }) => value),
+            name: bet.name,
+          };
+        }),
+      ),
+    );
+  const removeBet = (/** @type {Bet} */ bet) => {
+    removeChip(bet.chipElement);
+    bets.splice(bets.indexOf(bet), 1);
+
+    if (bets.length === 0) {
+      betsContainer.style.display = "none";
+      betIdInput.value = "";
+    } else {
+      betIdInput.value = generateBetId();
+    }
+  };
 
   const pockets = getPockets();
 
@@ -111,7 +127,8 @@
     const chip = createChip();
     event.target.appendChild(chip);
 
-    bets.push({
+    /** @type {Bet} */
+    const bet = {
       betAmount,
       pockets,
       chipElement: chip,
@@ -120,7 +137,15 @@
         (betType.includePocketsInName
           ? ` ${pockets.map(({ value }) => value).join(", ")}`
           : ""),
-    });
+    };
+
+    bets.push(bet);
+
+    const { betElement, divider } = createBetDOMElement(bet, removeBet);
+    betsContainer.style.display === "none" &&
+      (betsContainer.style.display = "block");
+    betsContainer.appendChild(divider);
+    betsContainer.appendChild(betElement);
 
     betIdInput.value = generateBetId();
   };
@@ -135,6 +160,62 @@ function createChip() {
   chip.style.left = `calc(50% + ${Math.floor(Math.random() * 8 - 4)}px)`;
   chip.style.top = `calc(50% + ${Math.floor(Math.random() * 8 - 4)}px)`;
   return chip;
+}
+
+/**
+ * @param {HTMLElement} chip
+ */
+function removeChip(chip) {
+  chip.classList.add("chip-out");
+
+  chip.addEventListener("animationend", () => {
+    chip.remove();
+  });
+}
+
+/**
+ * @param {Bet} bet
+ * @param {(bet: Bet) => void} removeBet
+ */
+function createBetDOMElement(bet, removeBet) {
+  const betInfo = `
+    <div class="bet__info">
+      <p><span class="info">Type:</span> ${bet.name}</p>
+      <p><span class="info">Aantal punten:</span> ${bet.betAmount}</p>
+    </div>
+  `;
+  const divider = document.createElement("div");
+  divider.classList.add("divider");
+
+  const betElement = document.createElement("div");
+  betElement.classList.add("bet");
+  betElement.innerHTML = betInfo;
+
+  const betX = document.createElement("button");
+  betX.classList.add("bet__X");
+  betX.innerText = "X";
+
+  betElement.appendChild(betX);
+
+  betX.addEventListener("click", () => {
+    divider.remove();
+    betElement.remove();
+    removeBet(bet);
+  });
+
+  betElement.addEventListener("mouseenter", () => {
+    console.log("enter");
+    bet.chipElement.classList.add("chip--highlight");
+  });
+  betElement.addEventListener("mouseleave", () => {
+    console.log("leave");
+    bet.chipElement.classList.remove("chip--highlight");
+  });
+
+  return {
+    divider,
+    betElement,
+  };
 }
 
 function getPockets() {

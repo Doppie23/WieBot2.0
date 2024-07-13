@@ -2,5 +2,5 @@
   "token": "TOKEN",
   "clientId": "CLIENT_ID",
   "guildId": "GUILD_ID_TO_ADD_COMMANDS_TO",
-  "rouletteIdSiteURL": "http://127.0.0.1:5500/src/commands/rng/roulette/public/index.html"
+  "rouletteIdSiteURL": "https://doppie23.github.io/WieBot2.0/src/commands/rng/roulette/public/index.html"
 }
