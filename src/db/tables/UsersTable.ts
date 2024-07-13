@@ -121,6 +121,7 @@ export default class UsersTable {
 
   updateRngScore(id: string, guildId: string, amount: number) {
     if (amount === 0) return;
+    amount = Math.floor(amount);
 
     const user = this.getUser(id, guildId);
 
