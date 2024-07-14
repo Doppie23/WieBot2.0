@@ -14,13 +14,20 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   await rng.playRngGame(interaction, amount, async () => {
     const game = new HigherLower(amount, interaction.user.displayName);
 
-    let response = await interaction.reply({
-      embeds: [game.embed],
-      components: game.components,
-      fetchReply: true,
-    });
-
     while (game.playerWon === undefined) {
+      let response;
+      if (!interaction.replied) {
+        response = await interaction.reply({
+          embeds: [game.embed],
+          components: game.components,
+        });
+      } else {
+        response = await interaction.editReply({
+          embeds: [game.embed],
+          components: game.components,
+        });
+      }
+
       const confirmation = await response.awaitMessageComponent({
         componentType: ComponentType.Button,
         filter: (i) => i.user.id === interaction.user.id,
@@ -37,11 +44,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       game.tick(confirmation.customId);
 
       await confirmation.deferUpdate();
-
-      response = await interaction.editReply({
-        embeds: [game.embed],
-        components: game.components,
-      });
     }
 
     if (game.playerWon === true) {
