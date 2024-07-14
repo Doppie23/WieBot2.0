@@ -1,4 +1,4 @@
-import random from "../../../utils/random";
+import { Card, Deck } from "../../../common/Deck";
 
 type Winnings = {
   winnings: number;
@@ -22,7 +22,7 @@ export class Blackjack {
     ["A", 11],
   ]);
 
-  private deck: Card[];
+  private deck: Deck;
 
   public playerHands: [Hand, ...Hand[]];
   public playerHandIndex = 0;
@@ -37,41 +37,27 @@ export class Blackjack {
   constructor(playerName: string, betAmount: number) {
     // // for testing
     // // eslint-disable-next-line no-constant-condition
-    // if (true) {
-    this.deck = Blackjack.createDeck();
-    random.shuffle(this.deck);
+    // if (false) {
+    this.deck = new Deck();
 
     this.playerHands = [
-      new Hand([this.deck.pop()!, this.deck.pop()!], playerName, betAmount),
+      new Hand([this.deck.pop(), this.deck.pop()], playerName, betAmount),
     ];
-    this.dealerHand = new Hand([this.deck.pop()!, this.deck.pop()!], "dealer");
+    this.dealerHand = new Hand([this.deck.pop(), this.deck.pop()], "dealer");
     // } else {
-    //   this.deck = [
-    //     new Card("♠️", "6"), //
-    //     new Card("♠️", "A"), //
-    //     new Card("♠️", "2"), //
-    //     new Card("♠️", "2"), //
-    //     new Card("♠️", "2"), //
-    //     new Card("♠️", "10"), //
-    //     new Card("♠️", "10"), //
-    //     new Card("♠️", "8"), //
-    //     new Card("♠️", "8"), //
-    //     new Card("♠️", "10"), //
-    //     new Card("♠️", "10"), //
-    //     new Card("♠️", "10"), //
-    //     new Card("♠️", "10"), //
-    //     new Card("♠️", "10"), //
-    //     new Card("♠️", "10"), //
-    //     new Card("♠️", "10"), //
-    //     new Card("♠️", "10"), //
-    //     new Card("♠️", "10"), //
-    //   ];
+    // this.deck = new TestDeck([
+    //   new Card("♠️", "6"), //
+    //   new Card("♠️", "A"), //
+    //   new Card("♠️", "2"), //
+    //   new Card("♠️", "2"), //
+    //   new Card("♠️", "2"), //
+    // ]);
 
     //   this.playerHands = [
     //     new Hand(
     //       [
     //         new Card("♠️", "10"), //
-    //         new Card("♠️", "10"), //
+    //         new Card("♠️", "A"), //
     //       ],
     //       playerName,
     //       betAmount,
@@ -79,23 +65,18 @@ export class Blackjack {
     //   ];
     //   this.dealerHand = new Hand(
     //     [
-    //       new Card("♠️", "4"), //
-    //       new Card("♠️", "5"), //
+    //       new Card("♠️", "10"), //
+    //       new Card("♠️", "6"), //
     //     ],
     //     "dealer",
     //   );
     // }
 
-    this.statusMsg = `${this.playerHands[0].name}'s beurt.`;
-
-    if (this.playerHands[0].hasBlackjack && !this.dealerHand.hasBlackjack) {
-      this.setGameOver();
-      return;
-    }
-
-    if (this.dealerHand.hasBlackjack && this.playerHands[0].hasBlackjack) {
-      this.setGameOver();
-      return;
+    if (!this.playerHands[0].hasBlackjack) {
+      this.statusMsg = `${this.playerHands[0].name}'s beurt.`;
+    } else {
+      this.nextHand();
+      this.statusMsg = `Dealer's beurt, ${this.playerHands[0].name} heeft blackjack.`;
     }
   }
 
@@ -113,7 +94,7 @@ export class Blackjack {
     if (this.playerHandIndex > this.playerHands.length)
       throw new Error("No more hands");
 
-    this.playerHands[this.playerHandIndex]!.cards.push(this.deck.pop()!);
+    this.playerHands[this.playerHandIndex]!.cards.push(this.deck.pop());
     if (this.playerHands[this.playerHandIndex]!.value > 21) {
       this.nextHand();
     }
@@ -149,6 +130,8 @@ export class Blackjack {
         this.setGameOver();
         return;
       }
+
+      this.statusMsg = "Dealer's beurt.";
     }
   }
 
@@ -161,12 +144,12 @@ export class Blackjack {
 
     const currHand = this.currentHand;
     const hand1 = new Hand(
-      [currHand.cards[0], this.deck.pop()!],
+      [currHand.cards[0], this.deck.pop()],
       currHand.name,
       currHand.betAmount,
     );
     const hand2 = new Hand(
-      [currHand.cards[1], this.deck.pop()!],
+      [currHand.cards[1], this.deck.pop()],
       currHand.name,
       currHand.betAmount,
     );
@@ -180,14 +163,12 @@ export class Blackjack {
   }
 
   public dealerTurn(): void {
-    this.statusMsg = "Dealer's beurt.";
-
     if (this.dealerHand.value >= 17) {
       this.setGameOver();
       return;
     }
 
-    this.dealerHand.cards.push(this.deck.pop()!);
+    this.dealerHand.cards.push(this.deck.pop());
 
     if (this.dealerHand.value >= 17) {
       this.setGameOver();
@@ -276,23 +257,6 @@ export class Blackjack {
 
     return this.winnings!;
   }
-
-  private static createDeck(): Card[] {
-    const cardNumbers = [];
-    for (const value of Blackjack.values.keys()) {
-      cardNumbers.push(value);
-    }
-    const suits = ["♥️", "♦️", "♣️", "♠️"];
-
-    const deck: Card[] = [];
-    for (const suit of suits) {
-      for (const number of cardNumbers) {
-        deck.push(new Card(suit, number));
-      }
-    }
-
-    return deck;
-  }
 }
 
 class Hand {
@@ -335,16 +299,5 @@ class Hand {
 
   public toString(): string {
     return this.cards.map((card) => card.toString()).join(", ");
-  }
-}
-
-class Card {
-  public value: number;
-  constructor(public suit: string, public number: string) {
-    this.value = Blackjack.values.get(number)!;
-  }
-
-  public toString(): string {
-    return this.number + this.suit;
   }
 }

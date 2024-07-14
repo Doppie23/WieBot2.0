@@ -34,7 +34,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     const response = await interaction.reply({
       embeds: [createEmbed(blackjack)],
-      components: !blackjack.isGameOver ? [row] : undefined,
+      components:
+        !blackjack.isGameOver && blackjack.isPlayerTurn ? [row] : undefined,
     });
 
     while (!blackjack.isGameOver) {
