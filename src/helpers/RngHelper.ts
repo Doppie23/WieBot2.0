@@ -148,7 +148,8 @@ class SlashCommandBuilder extends _SlashCommandBuilder {
     const user = db.users.getUser(interaction.user.id, interaction.guildId!);
     if (user!.rngScore! < amount) {
       await interaction.reply({
-        content: "Zo rijk ben je nou ook weer niet.",
+        content: `Zo rijk ben je nou ook weer niet, je hebt ${user!
+          .rngScore!} punten.`,
         ephemeral: true,
       });
       return;

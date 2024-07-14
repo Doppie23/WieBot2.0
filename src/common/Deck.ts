@@ -56,11 +56,11 @@ export class TestDeck extends Deck {
   /**
    * Useful for testing
    *
-   * Cards will be dealt from last to first
+   * Cards will be dealt from first to last
    */
   constructor(deck: Card[]) {
     super();
-    this.deck = deck;
+    this.deck = deck.reverse();
     this.length = this.deck.length;
   }
 
