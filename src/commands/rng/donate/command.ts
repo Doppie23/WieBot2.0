@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import { EmbedBuilder } from "discord.js";
 import type {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
@@ -10,7 +10,7 @@ import {
 } from "../../../utils/interaction";
 import rng from "../../../helpers/RngHelper";
 
-export const data = new SlashCommandBuilder()
+export const data = new rng.SlashCommandBuilder()
   .setName("donate")
   .setDescription("Doneer punten aan iemand anders")
   .addStringOption((option) =>
@@ -20,16 +20,10 @@ export const data = new SlashCommandBuilder()
       .setRequired(true)
       .setAutocomplete(true),
   )
-  .addIntegerOption((option) =>
-    option
-      .setName("amount")
-      .setDescription("Hoeveel punten wil je doneren?")
-      .setMinValue(1)
-      .setRequired(true),
-  );
+  .addBetAmountOption();
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const amount = await rng.getBetAmount(interaction);
+  const amount = await rng.SlashCommandBuilder.getBetAmount(interaction);
   if (amount === undefined) return;
 
   const targetId = interaction.options.getString("target")!;

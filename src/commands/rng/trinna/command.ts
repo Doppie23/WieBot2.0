@@ -1,21 +1,14 @@
-import { SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { createEmbed, trinna } from "./trinna";
 import rng from "../../../helpers/RngHelper";
 
-export const data = new SlashCommandBuilder()
+export const data = new rng.SlashCommandBuilder()
   .setName("trinna")
   .setDescription("trinna is altijd goed")
-  .addIntegerOption((option) =>
-    option
-      .setName("amount")
-      .setDescription("Hoeveel punten wil je inzetten?")
-      .setRequired(true)
-      .setMinValue(1),
-  );
+  .addBetAmountOption();
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const amount = await rng.getBetAmount(interaction);
+  const amount = await rng.SlashCommandBuilder.getBetAmount(interaction);
   if (amount === undefined) return;
 
   const result = trinna(amount);

@@ -1,4 +1,4 @@
-import { ComponentType, SlashCommandBuilder } from "discord.js";
+import { ComponentType } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import { Mines } from "./Mines";
 import rng from "../../../helpers/RngHelper";
@@ -9,16 +9,10 @@ const squaresY = 4;
 const minMines = 1;
 const maxMines = squaresX * squaresY - 1;
 
-export const data = new SlashCommandBuilder()
+export const data = new rng.SlashCommandBuilder()
   .setName("mines")
   .setDescription("100% winrate")
-  .addIntegerOption((option) =>
-    option
-      .setName("amount")
-      .setDescription("Hoeveel punten wil je inzetten?")
-      .setRequired(true)
-      .setMinValue(1),
-  )
+  .addBetAmountOption()
   .addIntegerOption((option) =>
     option
       .setName("mines")
@@ -31,7 +25,7 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const amount = await rng.getBetAmount(interaction);
+  const amount = await rng.SlashCommandBuilder.getBetAmount(interaction);
   if (amount === undefined) return;
 
   const amountOfmines = interaction.options.getInteger("mines")!;

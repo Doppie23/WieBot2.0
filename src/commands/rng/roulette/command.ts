@@ -1,5 +1,4 @@
 import {
-  SlashCommandBuilder,
   ChatInputCommandInteraction,
   ButtonBuilder,
   ButtonStyle,
@@ -24,15 +23,10 @@ export type Bet = {
   name: string;
 };
 
-export const data = new SlashCommandBuilder()
+export const data = new rng.SlashCommandBuilder()
   .setName("roulette")
   .setDescription("rng certified")
-  .addIntegerOption((option) =>
-    option
-      .setName("amount")
-      .setDescription("Hoeveel punten wil je inzetten?")
-      .setMinValue(1),
-  )
+  .addBetAmountOption({ name: "amount", required: false })
   .addStringOption((option) =>
     option
       .setName("bet")

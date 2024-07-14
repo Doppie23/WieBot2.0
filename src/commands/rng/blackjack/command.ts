@@ -1,23 +1,16 @@
-import { SlashCommandBuilder } from "discord.js";
 import { ChatInputCommandInteraction } from "discord.js";
 import db from "../../../db/db";
 import { Blackjack } from "./Blackjack";
 import rng from "../../../helpers/RngHelper";
 import { createEmbed, createRow } from "./components";
 
-export const data = new SlashCommandBuilder()
+export const data = new rng.SlashCommandBuilder()
   .setName("blackjack")
   .setDescription("Unlimited Money Glitch 100% WORKING!!1!")
-  .addIntegerOption((option) =>
-    option
-      .setName("amount")
-      .setDescription("Hoeveel punten wil je inzetten?")
-      .setRequired(true)
-      .setMinValue(1),
-  );
+  .addBetAmountOption();
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  let amount = await rng.getBetAmount(interaction);
+  let amount = await rng.SlashCommandBuilder.getBetAmount(interaction);
   if (amount === undefined) return;
 
   await rng.playRngGame(interaction, amount, async (increaseBetAmount) => {

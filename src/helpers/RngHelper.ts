@@ -1,43 +1,8 @@
-import { ChatInputCommandInteraction } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  SlashCommandBuilder as _SlashCommandBuilder,
+} from "discord.js";
 import db from "../db/db";
-
-/**
- * Gets the user provided bet amount using the interaction
- * @returns undefined if the user does not have enough points, or something else went wrong
- */
-async function getBetAmount(
-  interaction: ChatInputCommandInteraction,
-  fieldName: string = "amount",
-): Promise<number | undefined> {
-  const amount = interaction.options.getInteger(fieldName);
-
-  if (amount === null) {
-    await interaction.reply({
-      content: "Je moet een hoeveelheid punten opgeven.",
-      ephemeral: true,
-    });
-    return;
-  }
-
-  if (amount < 1) {
-    await interaction.reply({
-      content: "Je moet 1 of meer punten inzetten.",
-      ephemeral: true,
-    });
-    return;
-  }
-
-  const user = db.users.getUser(interaction.user.id, interaction.guildId!);
-  if (user!.rngScore! < amount) {
-    await interaction.reply({
-      content: "Zo rijk ben je nou ook weer niet.",
-      ephemeral: true,
-    });
-    return;
-  }
-
-  return amount;
-}
 
 /**
  * Removes the bet amount from the user's score
@@ -131,12 +96,74 @@ function getScaleFactor(guildId: string, zerosToRemove: number = 0): number {
   );
 }
 
+class SlashCommandBuilder extends _SlashCommandBuilder {
+  /**
+   * Adds an integer option to the command
+   * that requires the user to provide the amount of points they want to bet
+   */
+  public addBetAmountOption(options?: {
+    name?: string;
+    description?: string;
+    required?: boolean;
+  }) {
+    this.addIntegerOption((option) =>
+      option
+        .setName(options?.name ?? "amount")
+        .setDescription(
+          options?.description ?? "Hoeveel punten wil je inzetten?",
+        )
+        .setRequired(options?.required ?? true)
+        .setMinValue(1),
+    );
+
+    return this;
+  }
+
+  /**
+   * Gets the user provided bet amount using the interaction
+   * @returns undefined if the user does not have enough points, or something else went wrong
+   */
+  public static async getBetAmount(
+    interaction: ChatInputCommandInteraction,
+    fieldName: string = "amount",
+  ): Promise<number | undefined> {
+    const amount = interaction.options.getInteger(fieldName);
+
+    if (amount === null) {
+      await interaction.reply({
+        content: "Je moet een hoeveelheid punten opgeven.",
+        ephemeral: true,
+      });
+      return;
+    }
+
+    if (amount < 1) {
+      await interaction.reply({
+        content: "Je moet 1 of meer punten inzetten.",
+        ephemeral: true,
+      });
+      return;
+    }
+
+    const user = db.users.getUser(interaction.user.id, interaction.guildId!);
+    if (user!.rngScore! < amount) {
+      await interaction.reply({
+        content: "Zo rijk ben je nou ook weer niet.",
+        ephemeral: true,
+      });
+      return;
+    }
+
+    return amount;
+  }
+}
+
 const rng = {
-  getBetAmount,
   playRngGame,
   updateScore,
   keepTrackOfSession,
   getScaleFactor,
+  SlashCommandBuilder,
 };
 
 export default rng;

@@ -1,4 +1,4 @@
-import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { EmbedBuilder } from "discord.js";
 import type {
   APIApplicationCommandOptionChoice,
   ChatInputCommandInteraction,
@@ -27,16 +27,10 @@ function optionToString(option: Option): string {
   return option.emoji + " " + option.name;
 }
 
-export const data = new SlashCommandBuilder()
+export const data = new rng.SlashCommandBuilder()
   .setName("steen-papier-kool")
   .setDescription("Steen, Papier, Kool!")
-  .addIntegerOption((option) =>
-    option
-      .setName("amount")
-      .setDescription("Hoeveel punten wil je inzetten?")
-      .setRequired(true)
-      .setMinValue(1),
-  )
+  .addBetAmountOption()
   .addStringOption((option) =>
     option
       .setName("option")
@@ -53,7 +47,7 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const amount = await rng.getBetAmount(interaction);
+  const amount = await rng.SlashCommandBuilder.getBetAmount(interaction);
   if (amount === undefined) return;
 
   const userOption = interaction.options.getString("option")!;
