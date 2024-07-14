@@ -108,8 +108,8 @@ export class HigherLower {
   }
 
   private setButtonLabels() {
-    this.higherButton.setLabel(`🔼 Hoger (+${this.higherPayout})`);
-    this.lowerButton.setLabel(`🔽 Lager (+${this.lowerPayout})`);
+    this.higherButton.setEmoji("🔼").setLabel(`Hoger (+${this.higherPayout})`);
+    this.lowerButton.setEmoji("🔽").setLabel(`Lager (+${this.lowerPayout})`);
   }
 
   /**
@@ -164,7 +164,7 @@ export class HigherLower {
           this.playerWon === undefined
             ? {
                 name: "Payout",
-                value: this.winnings.toString(),
+                value: `${this.winnings} punten`,
               }
             : undefined,
         ].filter((f) => f !== undefined),

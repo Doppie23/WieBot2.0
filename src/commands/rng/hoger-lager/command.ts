@@ -4,7 +4,7 @@ import { HigherLower } from "./HigherLower";
 
 export const data = new rng.SlashCommandBuilder()
   .setName("hoger-lager")
-  .setDescription("epic description")
+  .setDescription("Raad of de volgende kaart hoger of lager is.")
   .addBetAmountOption();
 
 export async function execute(interaction: ChatInputCommandInteraction) {
