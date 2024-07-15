@@ -24,7 +24,13 @@ export class GameInteractionHandler {
     const embed = new EmbedBuilder()
       .setTitle(`Paardenrace | ${this.users.size}/${this.playersNeeded}`)
       .setColor(this.everyoneJoined ? "Green" : "Blue")
-      .setDescription(this.everyoneJoined ? "Gaat starten!" : "Join de race!");
+      .setDescription(
+        !this.started
+          ? this.everyoneJoined
+            ? "Gaat starten!"
+            : "Join de race!"
+          : null,
+      );
 
     const fields = [];
     for (const player of this.users.values()) {
@@ -42,15 +48,21 @@ export class GameInteractionHandler {
 
   public async playGame(onDone?: () => void) {
     this.started = true;
+
     await this.interaction.editReply({
+      embeds: [this.createJoinEmbed()],
+      components: [],
+    });
+    const response = await this.interaction.followUp({
       embeds: [this.race.createRaceEmbed()],
       components: [],
     });
+
     let winner: Paard | undefined = undefined;
     while (!winner) {
       winner = this.race.tick();
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      await this.interaction.editReply({
+      await response.edit({
         embeds: [this.race.createRaceEmbed()],
         components: [],
       });
@@ -61,7 +73,6 @@ export class GameInteractionHandler {
 
       if (user.paard.name === winner.name) {
         const winnings = Math.ceil(user.amount * (1 / winner.probability));
-        // winners.push({ id: userId, winnings });
         user.win(winnings);
       } else {
         user.loss();

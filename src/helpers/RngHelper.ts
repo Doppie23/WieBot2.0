@@ -4,6 +4,9 @@ import {
 } from "discord.js";
 import db from "../db/db";
 
+/**
+ * Removes the bet amount from the user's score and returns functions to end the game and handle all db logic
+ */
 function placeBet(
   userId: string,
   guildId: string,
