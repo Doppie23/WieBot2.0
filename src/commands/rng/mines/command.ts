@@ -35,7 +35,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     squaresY,
   });
 
-  await rng.playRngGame(interaction, amount, async () => {
+  await rng.playRngGame(interaction, amount, async ({ win, loss }) => {
     const response = await interaction.reply({
       embeds: [mines.createEmbed()],
       components: mines.rows,
@@ -57,7 +57,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     if (mines.isSuccess) {
-      rng.updateScore(interaction.user.id, interaction.guildId!, mines.payout);
+      win(mines.payout);
+    } else {
+      loss();
     }
   });
 }

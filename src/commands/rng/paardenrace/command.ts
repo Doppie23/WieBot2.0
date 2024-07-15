@@ -73,15 +73,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       await interaction.deleteReply();
 
       // refund users
-      game
-        .getUsers()
-        .forEach((user) =>
-          db.users.updateRngScore(
-            user.userId,
-            interaction.guildId!,
-            user.amount,
-          ),
-        );
+      game.getUsers().forEach((user) => user.refund());
     }
   });
 
@@ -120,23 +112,36 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       time: 60_000,
       filter: (mi) => mi.customId === "joinModal" && mi.user.id === i.user.id,
     })
-      .then(async (interaction) => {
-        const amount = await getInputFromModal(interaction, game);
+      .then(async (mInteraction) => {
+        const amount = await getInputFromModal(mInteraction, game);
         if (!amount) return;
 
-        rng.updateScore(interaction.user.id, interaction.guildId!, -amount);
-        await game.addUser(i.user.id, i.user.displayName, paard, amount);
+        if (game.hasUser(i.user.id)) {
+          game.removeUser(i.user.id);
+        }
 
-        await interaction.deferUpdate();
+        const { win, loss, refund } = rng.placeBet(
+          mInteraction.user.id,
+          mInteraction.guildId!,
+          amount,
+          interaction,
+        );
+        await game.addUser(
+          i.user.id,
+          i.user.displayName,
+          paard,
+          amount,
+          win,
+          loss,
+          refund,
+        );
+
+        await mInteraction.deferUpdate();
 
         if (game.everyoneJoined) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
-          await game.playGame((winners) => {
-            for (const winner of winners) {
-              rng.updateScore(winner.id, interaction.guildId!, winner.winnings);
-            }
-
-            activeGames.delete(interaction.guildId!);
+          await game.playGame(() => {
+            activeGames.delete(mInteraction.guildId!);
           });
         }
       })

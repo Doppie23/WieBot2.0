@@ -1,8 +1,14 @@
 import { ChatInputCommandInteraction, EmbedBuilder } from "discord.js";
 import { Paard, Paardenrace } from "./Paardenrace";
 
-type User = { name: string; paard: Paard; amount: number };
-type Winner = { id: string; winnings: number };
+type User = {
+  name: string;
+  paard: Paard;
+  amount: number;
+  win: (amount: number) => void;
+  loss: () => void;
+  refund: () => void;
+};
 
 export class GameInteractionHandler {
   public started: boolean = false;
@@ -34,7 +40,7 @@ export class GameInteractionHandler {
     return embed;
   }
 
-  public async playGame(onDone?: (winners: Winner[]) => void) {
+  public async playGame(onDone?: () => void) {
     this.started = true;
     await this.interaction.editReply({
       embeds: [this.race.createRaceEmbed()],
@@ -50,17 +56,19 @@ export class GameInteractionHandler {
       });
     }
 
-    const winners: Winner[] = [];
-    for (const [userId, user] of this.users.entries()) {
+    for (const user of this.users.values()) {
       if (!user.amount) continue;
 
       if (user.paard.name === winner.name) {
         const winnings = Math.ceil(user.amount * (1 / winner.probability));
-        winners.push({ id: userId, winnings });
+        // winners.push({ id: userId, winnings });
+        user.win(winnings);
+      } else {
+        user.loss();
       }
     }
 
-    onDone?.(winners);
+    onDone?.();
   }
 
   public getUsers(): (User & { userId: string })[] {
@@ -71,13 +79,35 @@ export class GameInteractionHandler {
     return values;
   }
 
+  public hasUser(userId: string): boolean {
+    return this.users.has(userId);
+  }
+
+  public removeUser(userId: string) {
+    if (!this.hasUser(userId)) return;
+
+    const user = this.users.get(userId)!;
+    user.refund();
+    this.users.delete(userId);
+  }
+
   public async addUser(
     userId: string,
     username: string,
     paard: Paard,
     number: number,
+    win: (amount: number) => void,
+    loss: () => void,
+    refund: () => void,
   ) {
-    this.users.set(userId, { name: username, paard, amount: number });
+    this.users.set(userId, {
+      name: username,
+      paard,
+      amount: number,
+      win,
+      loss,
+      refund,
+    });
     await this.interaction.editReply({
       embeds: [this.createJoinEmbed()],
       components: this.everyoneJoined ? [] : undefined,

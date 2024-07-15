@@ -100,10 +100,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     );
 
   if (outcome !== "draw") {
-    rng.updateScore(
+    rng.playInstantRngGame(
       interaction.user.id,
       interaction.guildId!,
       outcome === "user" ? amount : -amount,
+      interaction,
     );
   }
 

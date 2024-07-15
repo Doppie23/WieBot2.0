@@ -4,38 +4,90 @@ import {
 } from "discord.js";
 import db from "../db/db";
 
+function placeBet(
+  userId: string,
+  guildId: string,
+  amount: number,
+  interaction: ChatInputCommandInteraction,
+) {
+  // cannot use interaction.user.id here, because some games allow multiple users for the same interaction
+
+  let totalBetAmount = amount;
+  db.users.updateRngScore(userId, guildId, -amount);
+
+  const increaseBetAmount = (amountToAdd: number) => {
+    totalBetAmount += amountToAdd;
+    db.users.updateRngScore(userId, guildId, -amountToAdd);
+  };
+
+  const loss = () => {
+    db.rngRecords.createLossRecord(
+      userId,
+      guildId,
+      totalBetAmount,
+      interaction.commandName,
+    );
+  };
+
+  const win = (amount: number) => {
+    db.users.updateRngScore(userId, guildId, amount);
+    db.rngRecords.createLossRecord(
+      userId,
+      guildId,
+      amount - totalBetAmount,
+      interaction.commandName,
+    );
+  };
+
+  const refund = () => {
+    db.users.updateRngScore(userId, guildId, totalBetAmount);
+  };
+
+  return {
+    /**
+     * Increases the bet amount by the given amount
+     */
+    increaseBetAmount,
+    /**
+     * Records the win and adds the amount
+     * @param amount The amount the user won, including the bet amount
+     */
+    win,
+    /**
+     * Records the loss and makes it definitive
+     */
+    loss,
+    /**
+     * Refunds the bet, as if nothing happened
+     */
+    refund,
+  };
+}
+
 /**
- * Removes the bet amount from the user's score
+ * Wrapper around `placeBet` that handles any errors that may occur while playing the game,
+ * and automatically refunds the bet if an error occurs
  *
- * When an error occurs, the bet amount is put back in the user's score and the interaction is replied to
  * @param cb callback where the game is played
  */
 async function playRngGame(
   interaction: ChatInputCommandInteraction,
   amount: number,
-  cb: (increaseBetAmount: (amountToAdd: number) => void) => Promise<void>,
+  cb: (cbs: ReturnType<typeof placeBet>) => Promise<void>,
 ) {
-  updateScore(interaction.user.id, interaction.guildId!, -amount);
+  // its fine to just use interaction.user.id here, because this can only be used for single player games
 
-  let amountToRetrunOnError = amount;
-
-  const increaseBetAmount = (amountToAdd: number) => {
-    db.users.updateRngScore(
-      interaction.user.id,
-      interaction.guildId!,
-      -amountToAdd,
-    );
-    amountToRetrunOnError += amountToAdd;
-  };
+  const { win, loss, increaseBetAmount, refund } = placeBet(
+    interaction.user.id,
+    interaction.guildId!,
+    amount,
+    interaction,
+  );
 
   try {
-    await cb(increaseBetAmount);
+    await cb({ increaseBetAmount, win, loss, refund });
   } catch (error) {
-    db.users.updateRngScore(
-      interaction.user.id,
-      interaction.guildId!,
-      amountToRetrunOnError,
-    );
+    refund();
 
     if ((error as { code?: string }).code === "InteractionCollectorError") {
       await interaction.followUp({
@@ -52,24 +104,32 @@ async function playRngGame(
 }
 
 /**
- * Updates the user's score and keeps track of the session
+ * For games that are instantly played, without any user interaction
+ *
+ * @param amount The value to update the user's score with
  */
-function updateScore(userId: string, guildId: string, amount: number) {
-  try {
-    keepTrackOfSession(userId, guildId);
-  } catch (e) {
-    console.error("Error while keeping track of session", e);
-  }
-
+function playInstantRngGame(
+  userId: string,
+  guildId: string,
+  amount: number,
+  interaction: ChatInputCommandInteraction,
+) {
   db.users.updateRngScore(userId, guildId, amount);
-}
 
-function keepTrackOfSession(userId: string, guildId: string) {
-  if (!db.rngSessions.hasActiveSession(userId, guildId)) {
-    const user = db.users.getUser(userId, guildId);
-    db.rngSessions.startSession(userId, guildId, user!.rngScore!);
+  if (amount >= 0) {
+    db.rngRecords.createWinRecord(
+      userId,
+      guildId,
+      amount,
+      interaction.commandName,
+    );
   } else {
-    db.rngSessions.refreshSession(userId, guildId);
+    db.rngRecords.createLossRecord(
+      userId,
+      guildId,
+      -amount,
+      interaction.commandName,
+    );
   }
 }
 
@@ -160,9 +220,9 @@ class SlashCommandBuilder extends _SlashCommandBuilder {
 }
 
 const rng = {
+  placeBet,
   playRngGame,
-  updateScore,
-  keepTrackOfSession,
+  playInstantRngGame,
   getScaleFactor,
   SlashCommandBuilder,
 };

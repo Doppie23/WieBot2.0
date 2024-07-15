@@ -154,7 +154,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   const outcome = spinRoulette(bets);
 
-  rng.updateScore(interaction.user.id, interaction.guildId!, outcome.winnings);
+  rng.playInstantRngGame(
+    interaction.user.id,
+    interaction.guildId!,
+    outcome.winnings,
+    interaction,
+  );
 
   await interaction.reply({
     embeds: [

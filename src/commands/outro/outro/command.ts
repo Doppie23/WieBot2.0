@@ -177,7 +177,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       }
 
       const score = getRngScore(interaction.guildId!);
-      rng.updateScore(lastLeft.id, lastLeft.guild.id, score);
+
+      rng.playInstantRngGame(
+        lastLeft.id,
+        lastLeft.guild.id,
+        score,
+        interaction,
+      );
 
       const embed = new EmbedBuilder()
         .setTitle("Outro")

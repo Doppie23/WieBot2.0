@@ -43,7 +43,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return;
   }
 
-  const result = steel(user, target);
+  const result = steel(user, target, interaction);
 
   await interaction.reply({
     embeds: [
@@ -62,7 +62,11 @@ export async function autocomplete(interaction: AutocompleteInteraction) {
 
 type SteelResult = { success: boolean; score: number };
 
-function steel(user: DbUser, target: DbUser): SteelResult {
+function steel(
+  user: DbUser,
+  target: DbUser,
+  interaction: ChatInputCommandInteraction,
+): SteelResult {
   let userScore = user.rngScore!;
   let targetScore = target.rngScore!;
 
@@ -94,12 +98,14 @@ function steel(user: DbUser, target: DbUser): SteelResult {
 
   if (winnerId === user.id) {
     db.users.updateRngScore(target.id, guildId, -addedScore);
-    // only add this steal to session score for user not target
-    rng.updateScore(user.id, guildId, addedScore);
+    // only keep track of this steal in the user's score
+    rng.playInstantRngGame(user.id, guildId, addedScore, interaction);
+
     return { success: true, score: addedScore };
   }
   const fine = addedScore * 2;
-  rng.updateScore(user.id, guildId, -fine);
+  rng.playInstantRngGame(user.id, guildId, -fine, interaction);
+
   return { success: false, score: fine };
 }
 

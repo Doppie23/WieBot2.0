@@ -117,7 +117,11 @@ export class Mines {
     const embed = new EmbedBuilder()
       .setTitle(`Mines ${MINE}`)
       .setColor(!this.isGameOver ? "Green" : !this.isSuccess ? "Red" : "Green")
-      .setDescription(`${this.username} heeft ${this.amount} punten ingezet.`)
+      .setDescription(
+        !this.isGameOver
+          ? `${this.username} heeft ${this.amount} punten ingezet.`
+          : null,
+      )
       .setFields();
 
     const fields = [
@@ -125,18 +129,21 @@ export class Mines {
         name: `${DIAMOND} Diamanten gevonden`,
         value: this.diamondsClicked + "/" + this.diamondCount,
       },
-      {
-        name: `💰 Payout (${this.getPayoutFactor().toFixed(2)})`,
-        value: `${this.payout.toString()} punten`,
-      },
     ];
 
     if (this.isGameOver) {
       fields.push({
         name: "🏁 Resultaat",
         value: this.isSuccess
-          ? `${this.username} heeft ${this.payout} punten gewonnen!`
-          : `${this.username} heeft ${this.amount} punten verloren!`,
+          ? `${this.username} heeft ${
+              this.payout - this.amount
+            } punten gewonnen!`
+          : `${this.username} is ${this.amount} punten verloren!`,
+      });
+    } else {
+      fields.push({
+        name: `💰 Payout (${this.getPayoutFactor().toFixed(2)})`,
+        value: `${this.payout.toString()} punten`,
       });
     }
 

@@ -26,7 +26,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   const score = luckyWheel.currentOptions[1]!;
 
-  rng.updateScore(interaction.user.id, interaction.guildId!, score);
+  rng.playInstantRngGame(
+    interaction.user.id,
+    interaction.guildId!,
+    score,
+    interaction,
+  );
 
   await interaction.followUp(`Je hebt ${score} punten gewonnen.`);
 }

@@ -180,7 +180,7 @@ export class Blackjack {
     this.setWinnings();
 
     if (this.winnings!.nettoWinnings < 0) {
-      this.statusMsg = `${this.playerHands[0].name} heeft ${-this.winnings!
+      this.statusMsg = `${this.playerHands[0].name} is ${-this.winnings!
         .nettoWinnings} punten verloren!`;
       return;
     } else {

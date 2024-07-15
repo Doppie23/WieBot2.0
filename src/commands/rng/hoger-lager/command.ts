@@ -11,7 +11,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const amount = await rng.SlashCommandBuilder.getBetAmount(interaction);
   if (amount === undefined) return;
 
-  await rng.playRngGame(interaction, amount, async () => {
+  await rng.playRngGame(interaction, amount, async ({ win, loss }) => {
     const game = new HigherLower(amount, interaction.user.displayName);
 
     while (game.playerWon === undefined) {
@@ -47,7 +47,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     if (game.playerWon === true) {
-      rng.updateScore(interaction.user.id, interaction.guildId!, game.winnings);
+      win(game.winnings);
+    } else {
+      loss();
     }
 
     await interaction.editReply({

@@ -13,10 +13,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   const result = trinna(amount);
 
-  rng.updateScore(
+  rng.playInstantRngGame(
     interaction.user.id,
     interaction.guildId!,
     result.positive ? result.winnings : -amount,
+    interaction,
   );
 
   await interaction.reply({
