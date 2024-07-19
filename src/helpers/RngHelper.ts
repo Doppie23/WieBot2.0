@@ -34,7 +34,7 @@ function placeBet(
 
   const win = (amount: number) => {
     db.users.updateRngScore(userId, guildId, amount);
-    db.rngRecords.createLossRecord(
+    db.rngRecords.createWinRecord(
       userId,
       guildId,
       amount - totalBetAmount,

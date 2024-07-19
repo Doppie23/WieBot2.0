@@ -95,13 +95,6 @@ export class GameInteractionHandler {
       });
     }
 
-    this.winner = new Paard(
-      "Leunie(Mike)",
-      "Een echte zakenman.",
-      1.01,
-      0.3199,
-    );
-
     for (const user of this.users.values()) {
       if (!user.amount) continue;
 

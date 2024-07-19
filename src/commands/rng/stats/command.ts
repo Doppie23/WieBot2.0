@@ -84,7 +84,6 @@ function createEmbed(
   const mostProfitable = db.rngRecords.getMostProfitableGame(...params);
   const lastFiveGames = db.rngRecords.getLastRecords(...params, 5);
   const favoriteGame = db.rngRecords.getFavoriteGame(...params);
-  const averageBetAmount = db.rngRecords.getAverageBetAmount(...params);
 
   return new EmbedBuilder()
     .setTitle("Stats")
@@ -128,13 +127,6 @@ function createEmbed(
           ? {
               name: "🎈 Favoriete spel",
               value: `${favoriteGame.commandName} (${favoriteGame.usageCount}x gespeeld)`,
-              inline: true,
-            }
-          : undefined,
-        averageBetAmount !== undefined
-          ? {
-              name: "〰 Gemiddelde bet",
-              value: `${averageBetAmount.averageBet.toFixed(1)} punten`,
               inline: true,
             }
           : undefined,

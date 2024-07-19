@@ -254,28 +254,6 @@ export default class RngRecordsTable {
       .get(userId, guildId, startTime, endTime);
   }
 
-  getAverageBetAmount(
-    userId: string,
-    guildId: string,
-    startTime: OptTime = null,
-    endTime: OptTime = null,
-  ) {
-    return this.db
-      .prepare<[string, string, OptTime, OptTime], { averageBet: number }>(
-        `
-      SELECT *
-      FROM (SELECT AVG(amount) AS averageBet
-            FROM RngRecords
-            WHERE userId = ?
-              AND guildId = ?
-              AND time >= COALESCE(?, time)
-              AND time <= COALESCE(?, time))
-      WHERE averageBet IS NOT NULL;
-    `,
-      )
-      .get(userId, guildId, startTime, endTime);
-  }
-
   getMostProfitableGame(
     userId: string,
     guildId: string,
