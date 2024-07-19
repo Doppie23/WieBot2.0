@@ -1,8 +1,11 @@
 import {
+  AutocompleteInteraction,
   ChatInputCommandInteraction,
+  GuildMember,
   SlashCommandBuilder as _SlashCommandBuilder,
 } from "discord.js";
 import db from "../db/db";
+import { getGuildMember } from "../utils/interaction";
 
 /**
  * Removes the bet amount from the user's score and returns functions to end the game and handle all db logic
@@ -163,6 +166,10 @@ class SlashCommandBuilder extends _SlashCommandBuilder {
   /**
    * Adds an integer option to the command
    * that requires the user to provide the amount of points they want to bet
+   *
+   * @default
+   * name: "amount"
+   * required: true
    */
   public addBetAmountOption(options?: {
     name?: string;
@@ -219,6 +226,73 @@ class SlashCommandBuilder extends _SlashCommandBuilder {
     }
 
     return amount;
+  }
+
+  /**
+   * Adds an autocomplete option to the command
+   * that allows the user to select a different rng user
+   *
+   * The `command.ts` should export the following:
+   * @example
+   * export async function autocomplete(interaction: AutocompleteInteraction) {
+   *  await rng.SlashCommandBuilder.autocomplete(interaction);
+   * }
+   *
+   * @default
+   * name: "target"
+   * required: true
+   */
+  public addTargetOption(options?: {
+    name?: string;
+    description?: string;
+    required?: boolean;
+  }) {
+    this.addStringOption((option) =>
+      option
+        .setName(options?.name ?? "target")
+        .setDescription(options?.description ?? "wie?")
+        .setRequired(options?.required ?? true)
+        .setAutocomplete(true),
+    );
+    return this;
+  }
+
+  /**
+   * Wrapper around interaction.options.getString()
+   *
+   * @default
+   * fieldName: "target"
+   */
+  public static getTargetId(
+    interaction: ChatInputCommandInteraction,
+    fieldName: string = "target",
+  ): string | null {
+    return interaction.options.getString(fieldName);
+  }
+
+  public static async autocomplete(interaction: AutocompleteInteraction) {
+    const focusedValue = interaction.options.getFocused();
+    const users = db.users.getAllRngUsers(interaction.guildId!);
+
+    const guildUsers = await Promise.all(
+      users.map(async (user) => {
+        const guildUser = await getGuildMember(interaction, user.id);
+        if (!guildUser || guildUser.id === interaction.user.id)
+          return undefined;
+        return guildUser;
+      }),
+    );
+
+    const filtered = guildUsers.filter(
+      (user) => user !== undefined && user.displayName.startsWith(focusedValue),
+    ) as GuildMember[];
+
+    await interaction.respond(
+      filtered.map((choice) => ({
+        name: choice.displayName,
+        value: choice.id,
+      })),
+    );
   }
 }
 

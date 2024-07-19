@@ -1,4 +1,4 @@
-import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { EmbedBuilder } from "discord.js";
 import type {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
@@ -6,29 +6,19 @@ import type {
 } from "discord.js";
 import db from "../../../db/db";
 import random from "../../../utils/random";
-import {
-  autocompleteRngUsers,
-  getGuildMember,
-} from "../../../utils/interaction";
+import { getGuildMember } from "../../../utils/interaction";
 import { DbUser } from "../../../db/tables/UsersTable";
 import rng from "../../../helpers/RngHelper";
 
 export const timeout = 12 * 60 * 60; // 12 hours
 
-export const data = new SlashCommandBuilder()
+export const data = new rng.SlashCommandBuilder()
   .setName("steel")
   .setDescription("steel punten van iemand anders")
-  .addStringOption((option) =>
-    option
-      .setName("target")
-      .setDescription("wie?")
-      .setRequired(true)
-      .setAutocomplete(true),
-  );
+  .addTargetOption();
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const targetId = interaction.options.getString("target");
-  if (!targetId) throw new Error("targetId is undefined");
+  const targetId = rng.SlashCommandBuilder.getTargetId(interaction)!;
 
   const user = db.users.getUser(interaction.user.id, interaction.guildId!);
   const target = db.users.getUser(targetId, interaction.guildId!);
@@ -57,7 +47,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 }
 
 export async function autocomplete(interaction: AutocompleteInteraction) {
-  await autocompleteRngUsers(interaction);
+  await rng.SlashCommandBuilder.autocomplete(interaction);
 }
 
 type SteelResult = { success: boolean; score: number };

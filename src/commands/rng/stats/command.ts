@@ -1,27 +1,29 @@
-import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { EmbedBuilder } from "discord.js";
 import type {
   AutocompleteInteraction,
   ChatInputCommandInteraction,
   GuildMember,
 } from "discord.js";
 import db from "../../../db/db";
-import {
-  autocompleteRngUsers,
-  getGuildMember,
-} from "../../../utils/interaction";
+import { getGuildMember } from "../../../utils/interaction";
+import rng from "../../../helpers/RngHelper";
 
 /** maps name to delta time in ms */
 const timeOptions = new Map<string, number>([
+  ["afgelopen uur", 60 * 60 * 1000],
+  ["afgelopen 24 uur", 24 * 60 * 60 * 1000],
   ["afgelopen 7 dagen", 7 * 24 * 60 * 60 * 1000],
   ["afgelopen 30 dagen", 30 * 24 * 60 * 60 * 1000],
 ]);
 
-export const data = new SlashCommandBuilder()
+export const data = new rng.SlashCommandBuilder()
   .setName("stats")
   .setDescription("Zie alle statistieken van een speler.")
-  .addStringOption((option) =>
-    option.setName("target").setDescription("wie?").setAutocomplete(true),
-  )
+  .addTargetOption({
+    name: "wie",
+    description: "Van wie wil je de statistieken zien?",
+    required: false,
+  })
   .addStringOption((option) =>
     option
       .setName("periode")
@@ -35,11 +37,19 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  let targetId = interaction.options.getString("target");
+  let targetId = interaction.options.getString("wie");
   if (!targetId) {
     targetId = interaction.user.id;
   }
   const timeFrame = interaction.options.getString("periode");
+  let validTimeFrame = false;
+  if (timeFrame !== null) {
+    if (timeOptions.has(timeFrame)) {
+      validTimeFrame = true;
+    } else {
+      throw new Error(`${timeFrame} is not a valid time frame!`);
+    }
+  }
 
   const user = await getGuildMember(interaction, targetId);
 
@@ -47,7 +57,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     embeds: [
       createEmbed(
         user,
-        timeFrame !== null && timeOptions.has(timeFrame)
+        timeFrame !== null && validTimeFrame
           ? {
               name: timeFrame,
               startTime: Date.now() - timeOptions.get(timeFrame)!,
@@ -60,7 +70,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 }
 
 export async function autocomplete(interaction: AutocompleteInteraction) {
-  await autocompleteRngUsers(interaction);
+  await rng.SlashCommandBuilder.autocomplete(interaction);
 }
 
 function createEmbed(
@@ -86,12 +96,9 @@ function createEmbed(
   const favoriteGame = db.rngRecords.getFavoriteGame(...params);
 
   return new EmbedBuilder()
-    .setTitle("Stats")
+    .setTitle("Stats" + (timeOptions ? ` | ${timeOptions.name}` : ""))
     .setThumbnail(user.displayAvatarURL())
-    .setDescription(
-      `Statistieken voor ${user.displayName}` +
-        (timeOptions ? ` van **${timeOptions.name}**.` : "."),
-    )
+    .setDescription(`Statistieken voor ${user.displayName}.`)
     .setColor("Random")
     .setFields(
       [
@@ -104,30 +111,30 @@ function createEmbed(
           : undefined,
         biggestWin !== undefined
           ? {
-              name: "💰 Grootste win",
+              name: "💰 Grootste winst",
               value: `${biggestWin.amount} punten (${biggestWin.commandName})`,
-              inline: true,
+              inline: false,
             }
           : undefined,
         biggestLoss !== undefined
           ? {
               name: "📉 Grootste verlies",
               value: `${biggestLoss.amount} punten (${biggestLoss.commandName})`,
-              inline: true,
+              inline: false,
             }
           : undefined,
         mostProfitable !== undefined
           ? {
               name: "😎 Meest winstgevende spel",
               value: `${mostProfitable.commandName} (${mostProfitable.profit} punten)`,
-              inline: true,
+              inline: false,
             }
           : undefined,
         favoriteGame !== undefined
           ? {
               name: "🎈 Favoriete spel",
               value: `${favoriteGame.commandName} (${favoriteGame.usageCount}x gespeeld)`,
-              inline: true,
+              inline: false,
             }
           : undefined,
         lastFiveGames.length > 0

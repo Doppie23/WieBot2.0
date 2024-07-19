@@ -4,29 +4,27 @@ import type {
   ChatInputCommandInteraction,
 } from "discord.js";
 import db from "../../../db/db";
-import {
-  autocompleteRngUsers,
-  getGuildMember,
-} from "../../../utils/interaction";
+import { getGuildMember } from "../../../utils/interaction";
 import rng from "../../../helpers/RngHelper";
 
 export const data = new rng.SlashCommandBuilder()
   .setName("donate")
   .setDescription("Doneer punten aan iemand anders")
-  .addStringOption((option) =>
-    option
-      .setName("target")
-      .setDescription("wie?")
-      .setRequired(true)
-      .setAutocomplete(true),
-  )
+  // .addStringOption((option) =>
+  //   option
+  //     .setName("target")
+  //     .setDescription("wie?")
+  //     .setRequired(true)
+  //     .setAutocomplete(true),
+  // )
+  .addTargetOption()
   .addBetAmountOption();
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   const amount = await rng.SlashCommandBuilder.getBetAmount(interaction);
   if (amount === undefined) return;
 
-  const targetId = interaction.options.getString("target")!;
+  const targetId = rng.SlashCommandBuilder.getTargetId(interaction)!;
 
   const target = db.users.getUser(targetId, interaction.guildId!);
 
@@ -48,7 +46,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 }
 
 export async function autocomplete(interaction: AutocompleteInteraction) {
-  await autocompleteRngUsers(interaction);
+  await rng.SlashCommandBuilder.autocomplete(interaction);
 }
 
 function createEmbed(

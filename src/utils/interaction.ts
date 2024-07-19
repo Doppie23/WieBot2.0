@@ -1,5 +1,4 @@
-import { AutocompleteInteraction, GuildMember, Interaction } from "discord.js";
-import db from "../db/db";
+import { GuildMember, Interaction } from "discord.js";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -13,29 +12,6 @@ export function getGuildMember(
   if (user) return new Promise((resolve) => resolve(user));
 
   return interaction.guild.members.fetch(userId);
-}
-
-export async function autocompleteRngUsers(
-  interaction: AutocompleteInteraction,
-) {
-  const focusedValue = interaction.options.getFocused();
-  const users = db.users.getAllRngUsers(interaction.guildId!);
-
-  const guildUsers = await Promise.all(
-    users.map(async (user) => {
-      const guildUser = await getGuildMember(interaction, user.id);
-      if (!guildUser || guildUser.id === interaction.user.id) return undefined;
-      return guildUser;
-    }),
-  );
-
-  const filtered = guildUsers.filter(
-    (user) => user !== undefined && user.displayName.startsWith(focusedValue),
-  ) as GuildMember[];
-
-  await interaction.respond(
-    filtered.map((choice) => ({ name: choice.displayName, value: choice.id })),
-  );
 }
 
 export function recFindFiles(filename: string = "command.ts", dir: string) {
