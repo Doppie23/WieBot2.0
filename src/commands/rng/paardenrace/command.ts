@@ -139,7 +139,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         await mInteraction.deferUpdate();
 
         if (game.everyoneJoined) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 5000));
           await game.playGame(() => {
             activeGames.delete(mInteraction.guildId!);
           });

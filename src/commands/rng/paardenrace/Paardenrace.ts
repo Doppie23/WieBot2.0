@@ -10,8 +10,8 @@ export class Paard {
     public probability: number,
   ) {}
 
-  public toString(): string {
-    return `🐴 ${this.name} | ${this.probability}`;
+  public toString(showProbability: boolean = true): string {
+    return `🐴 ${this.name}${showProbability ? ` | ${this.probability}` : ""}`;
   }
 }
 

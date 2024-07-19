@@ -14,6 +14,10 @@ export class GameInteractionHandler {
   public started: boolean = false;
   public race: Paardenrace = new Paardenrace();
   private users: Map<string, User> = new Map();
+  private winner: Paard | undefined;
+  private winners: (
+    | User & ({ hasWon: false } | { winnings: number; hasWon: true })
+  )[] = [];
 
   constructor(
     private interaction: ChatInputCommandInteraction,
@@ -27,18 +31,26 @@ export class GameInteractionHandler {
       .setDescription(
         !this.started
           ? this.everyoneJoined
-            ? "Gaat starten!"
+            ? "Race gaat starten!"
             : "Join de race!"
           : null,
       );
+
+    const valueMaker = (player: User) => {
+      let str = "";
+      str += `- **Paard**: ${player.paard.toString()}\n`;
+      str += `- **Inzet**: ${player.amount} punten\n`;
+      str += `- **Payout**: ${this.getPayout(player)} punten`;
+      return str;
+    };
 
     const fields = [];
     for (const player of this.users.values()) {
       if (!player.amount && player.amount !== 0) continue;
 
       fields.push({
-        name: `${player.name} | ${player.amount} punten`,
-        value: player.paard.toString(),
+        name: `${player.name}`,
+        value: valueMaker(player),
       });
     }
     embed.addFields(fields);
@@ -46,38 +58,73 @@ export class GameInteractionHandler {
     return embed;
   }
 
+  public createPayoutEmbed(): EmbedBuilder {
+    if (!this.winner) {
+      throw new Error("race is not finished.");
+    }
+
+    return new EmbedBuilder()
+      .setTitle("Paardenrace")
+      .setColor("Green")
+      .setDescription(`${this.winner.toString(false)} heeft gewonnen!`)
+      .setFields(
+        this.winners.map((winner) => ({
+          name: `${winner.hasWon ? "✅" : "❌"} ${winner.name}`,
+          value: winner.hasWon
+            ? `+${winner.winnings - winner.amount} punten`
+            : `-${winner.amount} punten`,
+        })),
+      );
+  }
+
   public async playGame(onDone?: () => void) {
     this.started = true;
 
     await this.interaction.editReply({
-      embeds: [this.createJoinEmbed()],
-      components: [],
-    });
-    const response = await this.interaction.followUp({
       embeds: [this.race.createRaceEmbed()],
       components: [],
     });
 
-    let winner: Paard | undefined = undefined;
-    while (!winner) {
-      winner = this.race.tick();
+    this.winner = undefined;
+    while (!this.winner) {
+      this.winner = this.race.tick();
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      await response.edit({
+      await this.interaction.editReply({
         embeds: [this.race.createRaceEmbed()],
         components: [],
       });
     }
 
+    this.winner = new Paard(
+      "Leunie(Mike)",
+      "Een echte zakenman.",
+      1.01,
+      0.3199,
+    );
+
     for (const user of this.users.values()) {
       if (!user.amount) continue;
 
-      if (user.paard.name === winner.name) {
-        const winnings = Math.ceil(user.amount * (1 / winner.probability));
+      if (user.paard.name === this.winner.name) {
+        const winnings = this.getPayout(user);
         user.win(winnings);
+        this.winners.push({
+          ...user,
+          hasWon: true,
+          winnings: winnings,
+        });
       } else {
+        this.winners.push({
+          ...user,
+          hasWon: false,
+        });
         user.loss();
       }
     }
+
+    await this.interaction.followUp({
+      embeds: [this.createPayoutEmbed()],
+    });
 
     onDone?.();
   }
@@ -127,5 +174,9 @@ export class GameInteractionHandler {
 
   get everyoneJoined(): boolean {
     return this.users.size === this.playersNeeded;
+  }
+
+  private getPayout(user: User): number {
+    return Math.ceil(user.amount * (1 / user.paard.probability));
   }
 }
