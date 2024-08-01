@@ -87,6 +87,8 @@ function createEmbed(
     null,
   ] as const;
 
+  const currentScore = db.users.getUser(user.id, user.guild.id)!.rngScore!;
+
   const biggestWin = db.rngRecords.getBiggestWin(...params);
   const biggestLoss = db.rngRecords.getBiggestLoss(...params);
   const totalWins = db.rngRecords.getTotalWins(...params);
@@ -94,6 +96,7 @@ function createEmbed(
   const mostProfitable = db.rngRecords.getMostProfitableGame(...params);
   const lastFiveGames = db.rngRecords.getLastRecords(...params, 5);
   const favoriteGame = db.rngRecords.getFavoriteGame(...params);
+  const profit = db.rngRecords.getProfit(...params);
 
   return new EmbedBuilder()
     .setTitle("Stats" + (timeOptions ? ` | ${timeOptions.name}` : ""))
@@ -102,6 +105,20 @@ function createEmbed(
     .setColor("Random")
     .setFields(
       [
+        currentScore !== undefined
+          ? {
+              name: "🎲 Huidige score",
+              value: `${currentScore} punten`,
+              inline: false,
+            }
+          : undefined,
+        profit !== undefined
+          ? {
+              name: `${profit.profit > 0 ? "🟢" : "🔴"} Totale winst`,
+              value: `${profit.profit} punten`,
+              inline: false,
+            }
+          : undefined,
         totalWins !== undefined && totalLosses !== undefined
           ? {
               name: "✨ Record",
@@ -111,7 +128,7 @@ function createEmbed(
           : undefined,
         biggestWin !== undefined
           ? {
-              name: "💰 Grootste winst",
+              name: "💹 Grootste winst",
               value: `${biggestWin.amount} punten (${biggestWin.commandName})`,
               inline: false,
             }

@@ -280,4 +280,31 @@ export default class RngRecordsTable {
       )
       .get(userId, guildId, startTime, endTime);
   }
+
+  getProfit(
+    userId: string,
+    guildId: string,
+    startTime: OptTime = null,
+    endTime: OptTime = null,
+  ) {
+    const result = this.db
+      .prepare<[string, string, OptTime, OptTime], { profit: number }>(
+        `
+        SELECT SUM(CASE
+                      WHEN isWin = 1 THEN amount
+                      ELSE -amount END) AS profit
+        FROM RngRecords
+        WHERE userId = ?
+          AND guildId = ?
+          AND time >= COALESCE(?, time)
+          AND time <= COALESCE(?, time);
+    `,
+      )
+      .get(userId, guildId, startTime, endTime);
+
+    if (!result || result.profit === null) {
+      return undefined;
+    }
+    return result;
+  }
 }
